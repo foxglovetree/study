@@ -3,3 +3,7 @@
 /android/
 bin/
 .editorconfig
+*.exe
+*.dll
+*.pck
+export_presets.cfg
