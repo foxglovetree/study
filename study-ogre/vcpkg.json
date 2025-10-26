@@ -1,5 +1,4 @@
 {
-  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
   "name": "my-ogre-app",
   "version-string": "1.0.0",
   "dependencies": [
