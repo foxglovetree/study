@@ -47,10 +47,11 @@ int main()
 
 		// finally something to render
 		/*
+		*/
 		Ogre::Entity *ent = scnMgr->createEntity("Sinbad.mesh");
 		Ogre::SceneNode *node = scnMgr->getRootSceneNode()->createChildSceneNode();
 		node->attachObject(ent);
-		*/
+		
 		ctx.getRoot()->startRendering();
 		fmt::println("Closing.");
     	ctx.closeApp();

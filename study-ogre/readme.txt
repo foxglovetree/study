@@ -46,3 +46,15 @@
         ]
     }        
     ====
+.Dependency Tree:
+..Plugin_DotScene.dll(place this file in PluginFolder)
+...pugixml.dll(place this file in PATH)
+...OgreTerrain.dll(place this file in PATH)
+...OgrePaing.dll (place this file in PATH)
+..
+.Configuration files:
+..plugins.cfg(For windows you need copy to %PATH% or your Docuemnt/StudyOgre folder or other valid folder).
+
+..resources.cfg(same as plugins.cfg)
+
+.TroubleShooting:
