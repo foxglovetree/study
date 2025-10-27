@@ -2,9 +2,12 @@
 .. windows os(win11 verified at present)
 .. install MS VS tools 
     make sure the components for c++ development are selected.
-    including vcpkg,
-    including cmake,
-    including ninja(if cmake is selected)
+.. install vcpkg
+    git clone https://github.com/Microsoft/vcpkg.git
+    cd vcpkg
+    .\bootstrap-vcpkg.bat
+
+.. install cmake.
 
 .set env vars:
 ..set ENV var:VCPKG_HOME=<folder path to vcpkg command>
