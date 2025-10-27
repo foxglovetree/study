@@ -2,3 +2,8 @@
 build
 vcpkg_installed
 *~
+*.exe
+*.ilK
+*.obj
+*.pdb
+
