@@ -5,7 +5,17 @@
 #include <OgreRoot.h>
 #include <OgreRenderWindow.h>
 #include <OgreEntity.h>
-
+class KeyHandler : public OgreBites::InputListener
+{
+    bool keyPressed(const OgreBites::KeyboardEvent& evt) override
+    {
+        if (evt.keysym.sym == OgreBites::SDLK_ESCAPE)
+        {
+            Ogre::Root::getSingleton().queueEndRendering();
+        }
+        return true;
+    }
+};
 int main()
 {
 	std::string name = "World";
@@ -52,6 +62,9 @@ int main()
 		Ogre::SceneNode *node = scnMgr->getRootSceneNode()->createChildSceneNode();
 		node->attachObject(ent);
 		
+		//Handler
+		KeyHandler kh;
+		ctx.addInputListener(&kh);
 		ctx.getRoot()->startRendering();
 		fmt::println("Closing.");
     	ctx.closeApp();
