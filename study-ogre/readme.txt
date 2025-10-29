@@ -20,13 +20,30 @@
 ..Generate makefiles:
     PS > cmake --preset=default
 ...Build :
-    PS > cd build
-    PS > ninja
+    PS > cmake --build build
+
+.Configure Plugin
+..cd C:/Users/<your-account-name>/Documents/StudyOgre/
+..copy <project-home>/cfg/plugins.cfg ./
+..copy <soft-install-dir>/vcpkg/packages/ogre_x64-windows/debug/plugins/ogre/*.dll ./
+
+..copy dll dependencies for Plugin_DotScene_d.dll
+...cd <project>/build/Debug
+...copy <soft>/vcpkg/packages/pugixml_x64-windows/debug/bin/pugixml.dll ./
+...copy <soft/vcpkg/packages/ogre_x64-windows/debug/bin/OgrePaing_d.dll ./
+...copy <soft/vcpkg/packages/ogre_x64-windows/debug/bin/OgreTerrain_d.dll ./
+
+.Configure Resource
+..copy cfg/resources.cfg C:/Users/<your-account-name>/Documents/StudyOgre/
+
+
+.resources.cfg
 
 .dev with vscode
 ..install Addons:
 
 ..start vscode from Developer PowerShell for VS 2022.
+..RUN/Add Configuration/C++(Windows)
 ..Add configurion in lauch.json:
     
     ====
