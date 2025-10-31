@@ -1,0 +1,14 @@
+{
+  "name": "my-ogre-app-1",
+  "version-string": "1.0.0",
+  "dependencies": [
+    {
+      "name": "ogre",
+      "platform": "windows"
+    },
+    {
+      "name": "fmt",
+      "platform": "windows"
+    }
+  ]
+}
