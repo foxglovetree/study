@@ -1,497 +1,584 @@
-#include <Ogre.h>
+// main.cpp - Weighted Hexagonal Grid A* Navigation System + Ogre Visualization
+
+#include <iostream>
 #include <vector>
 #include <queue>
 #include <unordered_map>
+#include <unordered_set>
 #include <cmath>
-#include <iostream>
+#include <utility>
+#include <algorithm>
+#include <functional>
 
-// 2D导航网格节点
-struct NavNode {
-    int x, y;
-    float g, h;  // g:实际代价, h:启发函数
-    float f() const { return g + h; }
-    bool operator>(const NavNode& other) const { return f() > other.f(); }
-    bool operator==(const NavNode& other) const { return x == other.x && y == other.y; }
-    
-    // 用于unordered_map的哈希函数
-    struct Hash {
-        size_t operator()(const NavNode& node) const {
-            return std::hash<int>()(node.x) ^ std::hash<int>()(node.y);
-        }
-    };
+// === Include OgreBites for modern initialization ===
+#include <Bites/OgreApplicationContext.h>
+#include <OgreRoot.h>
+#include <OgreSceneManager.h>
+#include <OgreRenderWindow.h>
+#include <OgreCamera.h>
+#include <OgreViewport.h>
+#include <OgreEntity.h>
+#include <OgreManualObject.h>
+#include <OgreSceneNode.h>
+#include <OgreFrameListener.h>
+#include <OgreRTShaderSystem.h>
+
+// === Custom hash function ===
+struct PairHash {
+    template <typename T, typename U>
+    std::size_t operator()(const std::pair<T, U>& p) const {
+        auto h1 = std::hash<T>{}(p.first);
+        auto h2 = std::hash<U>{}(p.second);
+        return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
+    }
 };
 
-// 2D导航网格类 - 支持六边形网格的6方向移动
+// === NavNode structure ===
+struct NavNode {
+    int x, y;
+    float g, h;
+    float f() const { return g + h; }
+    bool operator>(const NavNode& other) const { return f() > other.f(); }
+};
+
+// === HexNavigationGrid class (with cost weights) ===
 class HexNavigationGrid {
 private:
-    std::vector<std::vector<bool>> grid;  // true=可通行, false=障碍物
+    std::vector<std::vector<int>> costGrid;
     int width, height;
-    
-    // 六边形网格的6方向移动偏移量（奇偶行交错）
-    // 对于平顶六边形，相邻关系需要根据行的奇偶性调整
-    int dx[6] = {-1, 0, 1, -1, 0, 1};  // x方向偏移
-    int dy[6] = {0, -1, 0, 1, 1, 1};   // y方向偏移 (偶数行)
-    int dy_odd[6] = {-1, -1, -1, 0, 0, 0};  // y方向偏移 (奇数行)
-    
+
+    // === Fixed hexagon neighbor offsets (flat-top) ===
+    int dx_even[6] = {+1,  0, -1, -1, -1,  0};
+    int dy_even[6] = { 0, -1, -1,  0, +1, +1};
+    int dx_odd[6]  = {+1, +1,  0, -1,  0, +1};
+    int dy_odd[6]  = { 0, -1, -1,  0, +1, +1};
+
 public:
+    static const int OBSTACLE = 0;
+    static const int DEFAULT_COST = 1;
+
     HexNavigationGrid(int w, int h) : width(w), height(h) {
-        grid.resize(height, std::vector<bool>(width, true));  // 默认全部可通行
+        costGrid.resize(height, std::vector<int>(width, DEFAULT_COST));
     }
-    
-    // 设置障碍物
-    void setObstacle(int x, int y, bool isObstacle = true) {
+
+    void setCost(int x, int y, int cost) {
         if (x >= 0 && x < width && y >= 0 && y < height) {
-            grid[y][x] = !isObstacle;
+            costGrid[y][x] = cost;
         }
     }
-    
-    // 检查位置是否可通行
+
+    int getCost(int x, int y) const {
+        if (x < 0 || x >= width || y < 0 || y >= height) return OBSTACLE;
+        return costGrid[y][x];
+    }
+
     bool isWalkable(int x, int y) const {
-        if (x < 0 || x >= width || y < 0 || y >= height) return false;
-        return grid[y][x];
+        return getCost(x, y) > 0;
     }
-    
-    // 获取相邻六边形坐标
+
     std::pair<int, int> getNeighbor(int x, int y, int direction) const {
-        if (y % 2 == 0) {  // 偶数行
-            return std::make_pair(x + dx[direction], y + dy[direction]);
-        } else {  // 奇数行
-            return std::make_pair(x + dx[direction], y + dy_odd[direction]);
+        if (direction < 0 || direction >= 6) return {x, y};
+        if (y % 2 == 0) {
+            return {x + dx_even[direction], y + dy_even[direction]};
+        } else {
+            return {x + dx_odd[direction], y + dy_odd[direction]};
         }
     }
-    
-    // 计算启发函数（六边形网格距离）
+
     float heuristic(int x1, int y1, int x2, int y2) const {
-        // 转换为立方坐标系计算距离
-        int x1_c = x1 - (y1 - (y1 & 1)) / 2;
-        int z1 = y1;
-        int y1_c = -x1_c - z1;
+        int q1 = x1 - (y1 - (y1 & 1)) / 2;
+        int r1 = y1;
+        int s1 = -q1 - r1;
+
+        int q2 = x2 - (y2 - (y2 & 1)) / 2;
+        int r2 = y2;
+        int s2 = -q2 - r2;
+
+        int dq = abs(q1 - q2);
+        int dr = abs(r1 - r2);
+        int ds = abs(s1 - s2);
         
-        int x2_c = x2 - (y2 - (y2 & 1)) / 2;
-        int z2 = y2;
-        int y2_c = -x2_c - z2;
-        
-        // 六边形网格距离 = (|dx| + |dy| + |dz|) / 2
-        int dx = abs(x1_c - x2_c);
-        int dy = abs(y1_c - y2_c);
-        int dz = abs(z1 - z2);
-        
-        return (dx + dy + dz) / 2.0f;
+        return static_cast<float>(std::max({dq, dr, ds}) * DEFAULT_COST);
     }
-    
-    // A*算法寻找最短路径 - 六边形网格
+
     std::vector<Ogre::Vector2> findPath(int startX, int startY, int endX, int endY) {
+        using Pos = std::pair<int, int>;
+
         if (!isWalkable(startX, startY) || !isWalkable(endX, endY)) {
-            return {};  // 起点或终点不可通行
+            return {};
         }
-        
+
         std::priority_queue<NavNode, std::vector<NavNode>, std::greater<NavNode>> openList;
-        std::unordered_map<NavNode, NavNode, NavNode::Hash> cameFrom;
-        std::unordered_map<NavNode, float, NavNode::Hash> gScore;
-        
+        std::unordered_map<Pos, Pos, PairHash> cameFrom;
+        std::unordered_map<Pos, float, PairHash> gScore;
+        std::unordered_set<Pos, PairHash> closed;
+
         NavNode start = {startX, startY, 0, heuristic(startX, startY, endX, endY)};
         openList.push(start);
-        gScore[start] = 0;
-        
+        gScore[{startX, startY}] = 0;
+
         while (!openList.empty()) {
             NavNode current = openList.top();
             openList.pop();
-            
+            Pos currPos = {current.x, current.y};
+
+            if (closed.find(currPos) != closed.end()) continue;
+            closed.insert(currPos);
+
             if (current.x == endX && current.y == endY) {
-                // 重建路径
-                return reconstructPath(cameFrom, current);
+                return reconstructPath(cameFrom, currPos);
             }
-            
-            // 检查6个相邻六边形
+
             for (int i = 0; i < 6; i++) {
                 auto [nx, ny] = getNeighbor(current.x, current.y, i);
-                
                 if (!isWalkable(nx, ny)) continue;
-                
-                float tentativeG = gScore[current] + 1.0f;  // 六边形移动成本相同
-                
-                if (gScore.find({nx, ny}) == gScore.end() || tentativeG < gScore[{nx, ny}]) {
-                    cameFrom[{nx, ny}] = current;
-                    gScore[{nx, ny}] = tentativeG;
+
+                Pos neighbor = {nx, ny};
+                int moveCost = getCost(nx, ny);
+                float tentativeG = gScore[currPos] + moveCost;
+
+                auto it = gScore.find(neighbor);
+                if (it == gScore.end() || tentativeG < it->second) {
+                    cameFrom[neighbor] = currPos;
+                    gScore[neighbor] = tentativeG;
                     float h = heuristic(nx, ny, endX, endY);
-                    
-                    NavNode neighbor = {nx, ny, tentativeG, h};
-                    openList.push(neighbor);
+
+                    NavNode node = {nx, ny, tentativeG, h};
+                    openList.push(node);
                 }
             }
         }
-        
-        return {}; // 无路径
+
+        return {};
     }
 
 private:
     std::vector<Ogre::Vector2> reconstructPath(
-        const std::unordered_map<NavNode, NavNode, NavNode::Hash>& cameFrom,
-        const NavNode& current) const {
-        
+        const std::unordered_map<std::pair<int,int>, std::pair<int,int>, PairHash>& cameFrom,
+        const std::pair<int,int>& current) const {
+
         std::vector<Ogre::Vector2> path;
-        NavNode node = current;
-        
+        std::pair<int,int> node = current;
+
         while (cameFrom.find(node) != cameFrom.end()) {
-            path.push_back(Ogre::Vector2(node.x, node.y));
+            path.push_back(Ogre::Vector2(static_cast<float>(node.first), static_cast<float>(node.second)));
             node = cameFrom.at(node);
         }
-        path.push_back(Ogre::Vector2(node.x, node.y));  // 添加起点
-        
+        path.push_back(Ogre::Vector2(static_cast<float>(node.first), static_cast<float>(node.second)));
+
         std::reverse(path.begin(), path.end());
         return path;
     }
-    
+
 public:
-    // 获取网格数据用于可视化
-    const std::vector<std::vector<bool>>& getGrid() const {
-        return grid;
+    // === Print original cost grid ===
+    void printCostGrid() const {
+        std::cout << "Original Cost Grid (0=obstacle, 1=normal, 2=costly, 3=very costly):\n";
+        for (int y = 0; y < height; y++) {
+            if (y % 2 == 1) std::cout << " ";
+            for (int x = 0; x < width; x++) {
+                int cost = costGrid[y][x];
+                if (cost == OBSTACLE) {
+                    std::cout << "# ";
+                } else {
+                    std::cout << cost << " ";
+                }
+            }
+            std::cout << "\n";
+        }
+        std::cout << "\n";
     }
-    
+
+    // === Print path result grid ===
+    void printPathGrid(int startx = -1, int starty = -1, int endx = -1, int endy = -1,
+                       const std::vector<Ogre::Vector2>& path = {}) const {
+        std::cout << "Path Result (S=start, E=end, *=path, number=cost):\n";
+
+        std::unordered_set<std::pair<int, int>, PairHash> pathSet;
+        for (const auto& p : path) {
+            pathSet.insert({static_cast<int>(p.x), static_cast<int>(p.y)});
+        }
+
+        for (int y = 0; y < height; y++) {
+            if (y % 2 == 1) std::cout << " ";
+            for (int x = 0; x < width; x++) {
+                char c = '.';
+                int cost = costGrid[y][x];
+
+                if (x == startx && y == starty) {
+                    c = 'S';
+                } else if (x == endx && y == endy) {
+                    c = 'E';
+                } else if (cost == OBSTACLE) {
+                    c = '#';
+                } else if (pathSet.find({x, y}) != pathSet.end() &&
+                           !(x == startx && y == starty) && !(x == endx && y == endy)) {
+                    c = '*';  // Path
+                } else {
+                    if (cost == DEFAULT_COST) {
+                        c = '.';  // Default cost shown as dot
+                    } else {
+                        c = '0' + cost;  // Show specific cost number
+                    }
+                }
+
+                std::cout << c << " ";
+            }
+            std::cout << "\n";
+        }
+    }
+
+    float calculatePathCost(const std::vector<Ogre::Vector2>& path) const {
+        float totalCost = 0;
+        for (size_t i = 1; i < path.size(); i++) {
+            int x = static_cast<int>(path[i].x);
+            int y = static_cast<int>(path[i].y);
+            totalCost += getCost(x, y);
+        }
+        return totalCost;
+    }
+
+    // === Data interface for Ogre rendering ===
+    const std::vector<std::vector<int>>& getCostGrid() const { return costGrid; }
     int getWidth() const { return width; }
     int getHeight() const { return height; }
-    
-    // 获取六边形顶点坐标
+
+    // Get hexagon vertices (for Ogre rendering)
     std::vector<Ogre::Vector3> getHexagonVertices(int x, int y, float size) const {
         std::vector<Ogre::Vector3> vertices(6);
-        
-        // 计算六边形中心位置
         float centerX = x * size * 1.5f;
-        float centerY = y * size * sqrt(3);
-        
-        // 如果是奇数行，需要偏移x坐标
-        if (y % 2 == 1) {
-            centerX += size * 0.75f;
-        }
-        
-        // 计算6个顶点（平顶六边形）
+        float centerY = y * size * std::sqrt(3.0f);
+        if (y % 2 == 1) centerX += size * 0.75f;
+
         for (int i = 0; i < 6; i++) {
-            float angle_deg = 60 * i + 30;  // +30度使顶点朝上
-            float angle_rad = angle_deg * 3.1415926f / 180.0f;
-            float dx = size * cos(angle_rad);
-            float dy = size * sin(angle_rad);
-            
-            vertices[i] = Ogre::Vector3(centerX + dx, centerY + dy, 0);
+            float angle_rad = (60.0f * i + 30.0f) * 3.1415926f / 180.0f;
+            float dx = size * std::cos(angle_rad);
+            float dy = size * std::sin(angle_rad);
+            vertices[i] = Ogre::Vector3(centerX + dx, centerY + dy, 0.0f);
         }
-        
+
         return vertices;
-    }
-    
-    // 打印六边形网格（文本形式）
-    void printHexGrid(int startx = -1, int starty = -1, int endx = -1, int endy = -1) const {
-        std::cout << "Hexagonal grid visualization:" << std::endl;
-        
-        for (int y = 0; y < height; y++) {
-            // 奇数行缩进
-            if (y % 2 == 1) std::cout << " ";
-            
-            for (int x = 0; x < width; x++) {
-                if (x == startx && y == starty) {
-                    std::cout << "S ";  // 起点
-                } else if (x == endx && y == endy) {
-                    std::cout << "E ";  // 终点
-                } else if (!grid[y][x]) {
-                    std::cout << "# ";  // 障碍物
-                } else {
-                    std::cout << ". ";  // 可通行
-                }
-                
-                // 在每行末尾添加空格以保持六边形视觉效果
-                if (x < width - 1) std::cout << " ";
-            }
-            std::cout << std::endl;
-        }
     }
 };
 
-// 六边形网格可视化类
-class HexNavigationVisualizer {
+// === Hexagonal Map Visualizer class ===
+class HexMapVisualizer {
 private:
     Ogre::SceneManager* sceneMgr;
-    Ogre::ManualObject* pathObject;
+    Ogre::RenderWindow* window;
+    Ogre::Camera* camera;
+    Ogre::SceneNode* cameraNode;
     Ogre::ManualObject* hexGridObject;
-    Ogre::ManualObject* directionObject;
+    Ogre::ManualObject* pathObject;
+    Ogre::SceneNode* gridNode;
     Ogre::SceneNode* pathNode;
-    Ogre::SceneNode* hexGridNode;
-    Ogre::SceneNode* directionNode;
-    
-    float hexSize;  // 六边形大小
-    Ogre::Vector3 gridOffset;  // 网格偏移量
-    
+    float hexSize;
+
 public:
-    HexNavigationVisualizer(Ogre::SceneManager* mgr, float size = 1.0f) 
-        : sceneMgr(mgr), hexSize(size) {
+    HexMapVisualizer(Ogre::SceneManager* mgr, Ogre::RenderWindow* win, float size = 30.0f)
+        : sceneMgr(mgr), window(win), hexSize(size) {
         
-        // 创建路径可视化对象
+        // Create camera
+        camera = sceneMgr->createCamera("HexMapCamera");
+        camera->setNearClipDistance(0.1f);
+        camera->setFarClipDistance(1000.0f);
+        camera->setAutoAspectRatio(true);
+
+        // Create camera node and set position and direction
+        cameraNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
+        cameraNode->setPosition(0, 0, 500);
+        cameraNode->attachObject(camera);
+        cameraNode->lookAt(Ogre::Vector3(0, 0, 0), Ogre::Node::TS_PARENT);
+
+        // Create viewport
+        Ogre::Viewport* vp = window->addViewport(camera);
+        vp->setBackgroundColour(Ogre::ColourValue(0.2f, 0.2f, 0.2f));
+
+        // Create hexagonal grid object
+        hexGridObject = sceneMgr->createManualObject("HexGridObject");
+        gridNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
+        gridNode->attachObject(hexGridObject);
+
+        // Create path object
         pathObject = sceneMgr->createManualObject("PathObject");
-        pathObject->setDynamic(true);
         pathNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
         pathNode->attachObject(pathObject);
-        
-        // 创建六边形网格可视化对象
-        hexGridObject = sceneMgr->createManualObject("HexGridObject");
-        hexGridObject->setDynamic(true);
-        hexGridNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
-        hexGridNode->attachObject(hexGridObject);
-        
-        // 创建方向可视化对象
-        directionObject = sceneMgr->createManualObject("DirectionObject");
-        directionObject->setDynamic(true);
-        directionNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
-        directionNode->attachObject(directionObject);
-        
-        gridOffset = Ogre::Vector3(0, 0, 0);
     }
-    
-    // 更新六边形网格可视化
-    void updateHexGridVisualization(const HexNavigationGrid& navGrid) {
+
+    void clear() {
+        // Clear and reset objects
         hexGridObject->clear();
+        pathObject->clear();
+    }
+
+    void drawHexGrid(const HexNavigationGrid& navGrid) {
+        // Clear the object first
+        hexGridObject->clear();
+        
         int width = navGrid.getWidth();
         int height = navGrid.getHeight();
         
+        // Begin the manual object
         hexGridObject->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int cost = navGrid.getCost(x, y);
+                Ogre::ColourValue color = getCostColor(cost);
+                
+                auto vertices = navGrid.getHexagonVertices(x, y, hexSize);
+                
+                // Draw hexagon (triangle fan)
+                if (cost == HexNavigationGrid::OBSTACLE) {
+                    // Obstacles in red
+                    drawHexagon(vertices, color);
+                } else {
+                    // Normal terrain with corresponding cost color
+                    drawHexagon(vertices, color);
+                }
+            }
+        }
         
+        // End the manual object
+        hexGridObject->end();
+    }
+
+    void drawPath(const HexNavigationGrid& navGrid, 
+                  const std::vector<Ogre::Vector2>& path,
+                  int startx, int starty, int endx, int endy) {
+        if (path.empty()) return;
+
+        // Clear the object first
+        pathObject->clear();
+        
+        // Create path points set for quick lookup
+        std::unordered_set<std::pair<int, int>, PairHash> pathSet;
+        for (const auto& p : path) {
+            pathSet.insert({static_cast<int>(p.x), static_cast<int>(p.y)});
+        }
+
+        // Begin the manual object
+        pathObject->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+
+        int width = navGrid.getWidth();
+        int height = navGrid.getHeight();
+
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 auto vertices = navGrid.getHexagonVertices(x, y, hexSize);
                 
-                if (!navGrid.isWalkable(x, y)) {
-                    // 绘制障碍物六边形（红色）
-                    drawHexagon(vertices, Ogre::ColourValue::Red);
-                } else {
-                    // 绘制可通行六边形（白色边框）
-                    drawHexagon(vertices, Ogre::ColourValue::White, false);
+                if (x == startx && y == starty) {
+                    // Start point in green
+                    drawHexagon(vertices, Ogre::ColourValue::Green);
+                } else if (x == endx && y == endy) {
+                    // End point in blue
+                    drawHexagon(vertices, Ogre::ColourValue::Blue);
+                } else if (pathSet.find({x, y}) != pathSet.end()) {
+                    // Path in yellow
+                    drawHexagon(vertices, Ogre::ColourValue(1.0f, 1.0f, 0.0f));  // Yellow
                 }
             }
         }
-        hexGridObject->end();
-    }
-    
-    // 更新路径可视化
-    void updatePathVisualization(const std::vector<Ogre::Vector2>& path, const HexNavigationGrid& navGrid) {
-        pathObject->clear();
-        if (path.empty()) return;
-        
-        pathObject->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
-        
-        for (size_t i = 0; i < path.size(); i++) {
-            auto pos = getHexCenter(path[i].x, path[i].y, navGrid);
-            pos.z = 0.02f;  // 稍微高一点避免被六边形覆盖
-            pathObject->position(pos);
-            
-            // 高亮路径上的六边形
-            auto vertices = navGrid.getHexagonVertices((int)path[i].x, (int)path[i].y, hexSize);
-            if (i == 0) {  // 起点
-                drawHexagon(vertices, Ogre::ColourValue::Green, true);
-            } else if (i == path.size() - 1) {  // 终点
-                drawHexagon(vertices, Ogre::ColourValue::Blue, true);
-            } else {  // 路径中间
-                drawHexagon(vertices, Ogre::ColourValue::Red, true);
-            }
-        }
+
+        // End the manual object
         pathObject->end();
     }
-    
-    // 更新方向可视化
-    void updateDirectionVisualization(int centerX, int centerY, const HexNavigationGrid& navGrid) {
-        directionObject->clear();
-        
-        directionObject->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_LIST);
-        
-        auto centerPos = getHexCenter(centerX, centerY, navGrid);
-        centerPos.z = 0.03f;
-        
-        // 绘制6个方向的连接线
-        for (int i = 0; i < 6; i++) {
-            auto [nx, ny] = navGrid.getNeighbor(centerX, centerY, i);
-            
-            if (navGrid.isWalkable(nx, ny)) {
-                auto neighborPos = getHexCenter(nx, ny, navGrid);
-                neighborPos.z = 0.03f;
-                
-                // 绘制方向线
-                directionObject->position(centerPos);
-                directionObject->position(neighborPos);
-                
-                // 绘制箭头
-                Ogre::Vector3 dir = (neighborPos - centerPos).normalisedCopy();
-                Ogre::Vector3 perp(-dir.z, 0, dir.x);
-                
-                Ogre::Vector3 arrow1 = neighborPos - dir * 0.2f + perp * 0.1f;
-                Ogre::Vector3 arrow2 = neighborPos - dir * 0.2f - perp * 0.1f;
-                
-                directionObject->position(neighborPos);
-                directionObject->position(arrow1);
-                directionObject->position(neighborPos);
-                directionObject->position(arrow2);
-            }
-        }
-        
-        directionObject->end();
-    }
-    
-    // 清除所有可视化
-    void clearAllVisualization() {
-        pathObject->clear();
-        hexGridObject->clear();
-        directionObject->clear();
-    }
 
 private:
-    // 获取六边形中心坐标
-    Ogre::Vector3 getHexCenter(int x, int y, const HexNavigationGrid& navGrid) const {
-        float centerX = x * hexSize * 1.5f;
-        float centerY = y * hexSize * sqrt(3);
-        
-        // 如果是奇数行，需要偏移x坐标
-        if (y % 2 == 1) {
-            centerX += hexSize * 0.75f;
+    // Get color based on cost
+    Ogre::ColourValue getCostColor(int cost) const {
+        switch (cost) {
+            case HexNavigationGrid::OBSTACLE: return Ogre::ColourValue::Red;
+            case HexNavigationGrid::DEFAULT_COST: return Ogre::ColourValue(0.5f, 0.5f, 0.5f);  // Gray
+            case 2: return Ogre::ColourValue(0.8f, 0.6f, 0.2f);  // Sand color
+            case 3: return Ogre::ColourValue(0.2f, 0.4f, 0.8f);  // Water color
+            default: return Ogre::ColourValue(0.7f, 0.7f, 0.7f);  // Default gray
         }
-        
-        return Ogre::Vector3(centerX + gridOffset.x, centerY + gridOffset.y, 0);
     }
-    
-    // 绘制六边形
+
+    // Draw a single hexagon
     void drawHexagon(const std::vector<Ogre::Vector3>& vertices, 
-                    const Ogre::ColourValue& color, bool filled = false) {
-        
-        if (filled) {
-            // 绘制填充的六边形
-            for (int i = 1; i < 5; i++) {
-                hexGridObject->position(vertices[0]); hexGridObject->colour(color * 0.7f);
-                hexGridObject->position(vertices[i]); hexGridObject->colour(color);
-                hexGridObject->position(vertices[i+1]); hexGridObject->colour(color);
-            }
-            // 闭合三角形扇形
-            hexGridObject->position(vertices[0]); hexGridObject->colour(color * 0.7f);
-            hexGridObject->position(vertices[5]); hexGridObject->colour(color);
-            hexGridObject->position(vertices[1]); hexGridObject->colour(color);
-        } else {
-            // 绘制六边形边框
-            for (int i = 0; i < 6; i++) {
-                int next = (i + 1) % 6;
-                hexGridObject->position(vertices[i]); hexGridObject->colour(color);
-                hexGridObject->position(vertices[next]); hexGridObject->colour(color);
-            }
+                     const Ogre::ColourValue& color) {
+        // Use triangle fan to draw hexagon
+        for (int i = 1; i < 5; i++) {
+            hexGridObject->position(vertices[0]);
+            hexGridObject->colour(color * 0.8f);  // Center slightly darker
+            
+            hexGridObject->position(vertices[i]);
+            hexGridObject->colour(color);
+            
+            hexGridObject->position(vertices[i+1]);
+            hexGridObject->colour(color);
         }
+        
+        // Close fan
+        hexGridObject->position(vertices[0]);
+        hexGridObject->colour(color * 0.8f);
+        hexGridObject->position(vertices[5]);
+        hexGridObject->colour(color);
+        hexGridObject->position(vertices[1]);
+        hexGridObject->colour(color);
     }
 };
 
-// 示例使用类
+// === Input handler for closing application ===
+class KeyHandler : public OgreBites::InputListener {
+public:
+    bool keyPressed(const OgreBites::KeyboardEvent& evt) override {
+        if (evt.keysym.sym == OgreBites::SDLK_ESCAPE) {
+            Ogre::Root::getSingleton().queueEndRendering();
+        }
+        return true;
+    }
+};
+
+// === Example main class ===
 class HexNavigationExample {
 private:
-    HexNavigationGrid* navGrid;
-    HexNavigationVisualizer* visualizer;
-    
+    std::unique_ptr<HexNavigationGrid> navGrid;
+    std::unique_ptr<OgreBites::ApplicationContext> appCtx;
+    Ogre::SceneManager* sceneMgr;
+    std::unique_ptr<HexMapVisualizer> visualizer;
+    KeyHandler keyHandler;
+
 public:
-    HexNavigationExample() {
-        navGrid = new HexNavigationGrid(12, 10);
-        visualizer = nullptr;
-        
-        // 设置一些障碍物
-        setupExampleObstacles();
+    HexNavigationExample() : navGrid(std::make_unique<HexNavigationGrid>(12, 10)),
+                           appCtx(std::make_unique<OgreBites::ApplicationContext>("HexagonalGridVisualizer")),
+                           sceneMgr(nullptr) {
+        setupExampleTerrain();
     }
-    
-    ~HexNavigationExample() {
-        delete navGrid;
-    }
-    
-    void setupExampleObstacles() {
-        // 创建一个简单的障碍物布局
+
+    void setupExampleTerrain() {
+        // Sand: cost 2
         for (int i = 3; i < 8; i++) {
-            navGrid->setObstacle(i, 4, true);  // 水平墙
+            navGrid->setCost(i, 4, 2);
         }
-        
+
+        // Water: cost 3
         for (int i = 2; i < 6; i++) {
-            navGrid->setObstacle(6, i, true);  // 垂直墙
+            navGrid->setCost(6, i, 3);
         }
-        
-        // 创建一个通道
-        navGrid->setObstacle(6, 4, false);
+
+        // Low cost path (like road)
+        for (int i = 2; i < 10; i++) {
+            navGrid->setCost(i, 7, 1);
+        }
+
+        // Obstacles
+        navGrid->setCost(4, 3, HexNavigationGrid::OBSTACLE);
+        navGrid->setCost(7, 5, HexNavigationGrid::OBSTACLE);
     }
-    
-    // 执行导航计算
-    std::vector<Ogre::Vector2> navigate(int startx, int starty, int endx, int endy) {
-        auto path = navGrid->findPath(startx, starty, endx, endy);
-        
-        // 打印调试信息
-        std::cout << "Path found with " << path.size() << " hexes" << std::endl;
-        if (!path.empty()) {
-            std::cout << "Path: ";
-            for (const auto& node : path) {
-                std::cout << "(" << (int)node.x << "," << (int)node.y << ") ";
-            }
-            std::cout << std::endl;
+
+    bool initOgre() {
+        try {
+            std::cout << "Initializing app context.\n";
+            appCtx->initApp();
+            std::cout << "App context initialized.\n";
+
+            Ogre::Root* root = appCtx->getRoot();
+            sceneMgr = root->createSceneManager();
+
+            // Register our scene with the RTSS (Required for proper lighting/shaders)
+            Ogre::RTShader::ShaderGenerator* shadergen = Ogre::RTShader::ShaderGenerator::getSingletonPtr();
+            shadergen->addSceneManager(sceneMgr);
+
+            // Create visualizer
+            visualizer = std::make_unique<HexMapVisualizer>(sceneMgr, appCtx->getRenderWindow());
+
+            // Add input listener
+            appCtx->addInputListener(&keyHandler);
+
+            std::cout << "Ogre initialized successfully.\n";
+            return true;
+            
+        } catch (const std::exception& e) {
+            std::cerr << "Ogre initialization failed: " << e.what() << std::endl;
+            return false;
         }
+    }
+
+    // Navigate and print dual maps
+    std::vector<Ogre::Vector2> navigate(int sx, int sy, int ex, int ey) {
+        std::cout << "Finding path from (" << sx << "," << sy << ") to (" << ex << "," << ey << "):\n";
         
+        navGrid->printCostGrid();
+
+        auto path = navGrid->findPath(sx, sy, ex, ey);
+        
+        std::cout << "Path found with " << path.size() << " hexes\n";
+        if (!path.empty()) {
+            float totalCost = navGrid->calculatePathCost(path);
+            std::cout << "Total path cost: " << totalCost << "\n";
+            std::cout << "Path: ";
+            for (const auto& p : path) {
+                std::cout << "(" << (int)p.x << "," << (int)p.y << ") ";
+            }
+            std::cout << "\n";
+        }
+
+        std::cout << "\n";
+        navGrid->printPathGrid(sx, sy, ex, ey, path);
+
+        // === Use Ogre for visualization ===
+        if (visualizer) {
+            try {
+                visualizer->drawHexGrid(*navGrid);
+                visualizer->drawPath(*navGrid, path, sx, sy, ex, ey);
+                std::cout << "Ogre visualization updated.\n";
+            } catch (const std::exception& e) {
+                std::cerr << "Ogre rendering failed: " << e.what() << std::endl;
+            }
+        }
+
+        std::cout << "\n" << std::string(50, '-') << "\n\n";
         return path;
     }
-    
-    // 打印六边形网格
-    void printHexGrid(int startx = -1, int starty = -1, int endx = -1, int endy = -1) const {
-        navGrid->printHexGrid(startx, starty, endx, endy);
+
+    void runVisualization() {
+        if (appCtx && sceneMgr) {
+            std::cout << "Starting Ogre visualization... Press ESC to exit.\n";
+            try {
+                // Start rendering loop
+                appCtx->getRoot()->startRendering();
+                std::cout << "Rendering loop ended.\n";
+            } catch (const std::exception& e) {
+                std::cerr << "Ogre rendering loop error: " << e.what() << std::endl;
+            }
+        } else {
+            std::cout << "Ogre visualization not available.\n";
+        }
     }
-    
-    // 设置可视化器
-    void setVisualizer(HexNavigationVisualizer* viz) {
-        visualizer = viz;
-    }
-    
-    // 获取导航网格
-    HexNavigationGrid* getNavGrid() { return navGrid; }
+
+    HexNavigationGrid* getNavGrid() { return navGrid.get(); }
 };
 
-// 主函数示例
+// === Main function ===
 int main() {
     try {
-        // 创建六边形导航系统
-        HexNavigationExample hexNavExample;
-        
-        std::cout << "Hexagonal Grid Navigation System" << std::endl;
-        std::cout << "=================================" << std::endl;
-        
-        // 打印初始六边形网格
-        std::cout << "Initial hexagonal grid (S=start, E=end, #=obstacle, .=walkable):" << std::endl;
-        hexNavExample.printHexGrid(2, 2, 9, 7);  // 标记起点(2,2)和终点(9,7)
-        
-        // 执行导航
-        std::cout << "\nFinding path from (2,2) to (9,7):" << std::endl;
-        auto path = hexNavExample.navigate(2, 2, 9, 7);
-        
-        if (path.empty()) {
-            std::cout << "No path found!" << std::endl;
-        } else {
-            std::cout << "Successfully found path with " << path.size() << " hexes!" << std::endl;
+        HexNavigationExample hexNav;
+
+        std::cout << "Weighted Hexagonal Grid Navigation System\n";
+        std::cout << "=========================================\n\n";
+
+        // Initialize Ogre first
+        if (!hexNav.initOgre()) {
+            std::cout << "Failed to initialize Ogre, continuing with text output only.\n";
+            return 1;
         }
-        
-        // 在实际OGRE应用中，这里会调用可视化更新
-        std::cout << "\nIn a real OGRE application, the following would be visualized:" << std::endl;
-        std::cout << "- Hexagonal grid with alternating row offset" << std::endl;
-        std::cout << "- Red hexes for obstacles" << std::endl;
-        std::cout << "- Green hex for start point" << std::endl;
-        std::cout << "- Blue hex for end point" << std::endl;
-        std::cout << "- Yellow hexes for path nodes" << std::endl;
-        std::cout << "- Direction arrows showing 6 possible movement directions" << std::endl;
-        
-        // 测试另一个路径
-        std::cout << "\nTesting path (1, 1) -> (10, 8):" << std::endl;
-        hexNavExample.printHexGrid(1, 1, 10, 8);
-        auto path2 = hexNavExample.navigate(1, 1, 10, 8);
-        
-        // 演示六边形邻居关系
-        std::cout << "\nDemonstrating hexagonal neighbor relationships:" << std::endl;
-        auto navGrid = hexNavExample.getNavGrid();
-        for (int dir = 0; dir < 6; dir++) {
-            auto [nx, ny] = navGrid->getNeighbor(5, 5, dir);
-            std::cout << "Direction " << dir << " from (5,5): (" << nx << "," << ny << ")" << std::endl;
-        }
-        
+
+        // Test paths
+        hexNav.navigate(1, 1, 10, 8);
+        hexNav.navigate(2, 2, 9, 7);
+
+        // Run Ogre visualization
+        hexNav.runVisualization();
+
+        // Clean up
+        std::cout << "Closing application.\n";
+
     } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "Error: " << e.what() << "\n";
     }
-    
+
     return 0;
 }
-
-
-

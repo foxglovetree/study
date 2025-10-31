@@ -4,3 +4,6 @@ study-godot-cpp/demo/main.gd.uid
 study-godot-cpp/src/gdexample.os
 study-godot-cpp/demo/icon.svg.import
 **/*~
+.vscode
+*/build
+*/.vscode
