@@ -1,4 +1,4 @@
-// main.cpp - Weighted Hexagonal Grid A* Navigation System + Ogre Visualization
+// main.cpp - Complete Ogre A* Hex Grid Visualization System
 
 #include <iostream>
 #include <vector>
@@ -274,9 +274,18 @@ private:
     Ogre::SceneNode* pathNode;
     float hexSize;
 
+    // Current state
+    const HexNavigationGrid* currentGrid;
+    std::vector<Ogre::Vector2> currentPath;
+    int startx, starty, endx, endy;
+    bool gridDirty;
+    bool pathDirty;
+
 public:
     HexMapVisualizer(Ogre::SceneManager* mgr, Ogre::RenderWindow* win, float size = 30.0f)
-        : sceneMgr(mgr), window(win), hexSize(size) {
+        : sceneMgr(mgr), window(win), hexSize(size), 
+          currentGrid(nullptr), startx(-1), starty(-1), endx(-1), endy(-1),
+          gridDirty(false), pathDirty(false) {
         
         // Create camera
         camera = sceneMgr->createCamera("HexMapCamera");
@@ -305,36 +314,63 @@ public:
         pathNode->attachObject(pathObject);
     }
 
-    void clear() {
-        // Clear and reset objects
-        hexGridObject->clear();
-        pathObject->clear();
+    void setGrid(const HexNavigationGrid& grid) {
+        currentGrid = &grid;
+        gridDirty = true;
     }
 
-    void drawHexGrid(const HexNavigationGrid& navGrid) {
-        // Clear the object first
+    void setPath(const std::vector<Ogre::Vector2>& path, int sx, int sy, int ex, int ey) {
+        currentPath = path;
+        startx = sx;
+        starty = sy;
+        endx = ex;
+        endy = ey;
+        pathDirty = true;
+    }
+
+    void update() {
+        
+        if (!currentGrid) return;
+
+        if (gridDirty) {
+            drawHexGrid();
+            gridDirty = false;
+        }
+
+        if (pathDirty) {
+            drawPath();
+            pathDirty = false;
+        }
+    }
+
+private:
+    void drawHexGrid() {
+         std::cout << "Drawing hex grid... width=" << currentGrid->getWidth() 
+              << ", height=" << currentGrid->getHeight() << std::endl;
+        if (!currentGrid) return;
+        
         hexGridObject->clear();
         
-        int width = navGrid.getWidth();
-        int height = navGrid.getHeight();
+        int width = currentGrid->getWidth();
+        int height = currentGrid->getHeight();
         
         // Begin the manual object
         hexGridObject->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                int cost = navGrid.getCost(x, y);
+                int cost = currentGrid->getCost(x, y);
                 Ogre::ColourValue color = getCostColor(cost);
                 
-                auto vertices = navGrid.getHexagonVertices(x, y, hexSize);
+                auto vertices = currentGrid->getHexagonVertices(x, y, hexSize);
                 
                 // Draw hexagon (triangle fan)
                 if (cost == HexNavigationGrid::OBSTACLE) {
                     // Obstacles in red
-                    drawHexagon(vertices, color);
+                    drawHexagonTo(hexGridObject, vertices, color);
                 } else {
                     // Normal terrain with corresponding cost color
-                    drawHexagon(vertices, color);
+                    drawHexagonTo(hexGridObject, vertices, color);
                 }
             }
         }
@@ -343,39 +379,39 @@ public:
         hexGridObject->end();
     }
 
-    void drawPath(const HexNavigationGrid& navGrid, 
-                  const std::vector<Ogre::Vector2>& path,
-                  int startx, int starty, int endx, int endy) {
-        if (path.empty()) return;
+    void drawPath() {
+        if (currentPath.empty()) {
+            pathObject->clear();
+            return;
+        }
 
-        // Clear the object first
         pathObject->clear();
         
         // Create path points set for quick lookup
         std::unordered_set<std::pair<int, int>, PairHash> pathSet;
-        for (const auto& p : path) {
+        for (const auto& p : currentPath) {
             pathSet.insert({static_cast<int>(p.x), static_cast<int>(p.y)});
         }
 
         // Begin the manual object
         pathObject->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
-        int width = navGrid.getWidth();
-        int height = navGrid.getHeight();
+        int width = currentGrid->getWidth();
+        int height = currentGrid->getHeight();
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                auto vertices = navGrid.getHexagonVertices(x, y, hexSize);
+                auto vertices = currentGrid->getHexagonVertices(x, y, hexSize);
                 
                 if (x == startx && y == starty) {
                     // Start point in green
-                    drawHexagon(vertices, Ogre::ColourValue::Green);
+                    drawHexagonTo(pathObject, vertices, Ogre::ColourValue::Green);
                 } else if (x == endx && y == endy) {
                     // End point in blue
-                    drawHexagon(vertices, Ogre::ColourValue::Blue);
+                    drawHexagonTo(pathObject, vertices, Ogre::ColourValue::Blue);
                 } else if (pathSet.find({x, y}) != pathSet.end()) {
                     // Path in yellow
-                    drawHexagon(vertices, Ogre::ColourValue(1.0f, 1.0f, 0.0f));  // Yellow
+                    drawHexagonTo(pathObject, vertices, Ogre::ColourValue(1.0f, 1.0f, 0.0f));  // Yellow
                 }
             }
         }
@@ -384,7 +420,6 @@ public:
         pathObject->end();
     }
 
-private:
     // Get color based on cost
     Ogre::ColourValue getCostColor(int cost) const {
         switch (cost) {
@@ -396,28 +431,59 @@ private:
         }
     }
 
-    // Draw a single hexagon
-    void drawHexagon(const std::vector<Ogre::Vector3>& vertices, 
-                     const Ogre::ColourValue& color) {
-        // Use triangle fan to draw hexagon
-        for (int i = 1; i < 5; i++) {
-            hexGridObject->position(vertices[0]);
-            hexGridObject->colour(color * 0.8f);  // Center slightly darker
-            
-            hexGridObject->position(vertices[i]);
-            hexGridObject->colour(color);
-            
-            hexGridObject->position(vertices[i+1]);
-            hexGridObject->colour(color);
+    // Draw a single hexagon to a specific object
+    void drawHexagonTo(Ogre::ManualObject* obj, 
+                       const std::vector<Ogre::Vector3>& vertices, 
+                       const Ogre::ColourValue& color) {
+        // Compute center
+        Ogre::Vector3 center(0, 0, 0);
+        for (auto& v : vertices) center += v;
+        center *= (1.0f / 6.0f);
+
+        size_t baseIndex = obj->getCurrentVertexCount();
+
+        // Center
+        obj->position(center);
+        obj->colour(color * 0.7f);
+
+        // Corners
+        for (int i = 0; i < 6; ++i) {
+            obj->position(vertices[i]);
+            obj->colour(color);
         }
-        
-        // Close fan
-        hexGridObject->position(vertices[0]);
-        hexGridObject->colour(color * 0.8f);
-        hexGridObject->position(vertices[5]);
-        hexGridObject->colour(color);
-        hexGridObject->position(vertices[1]);
-        hexGridObject->colour(color);
+
+        // Triangles
+        for (int i = 0; i < 6; ++i) {
+            int next = (i + 1) % 6;
+            obj->triangle(baseIndex, baseIndex + i + 1, baseIndex + next + 1);
+        }
+    }
+};
+
+// === Frame Listener class for main loop ===
+class HexApp : public Ogre::FrameListener {
+private:
+    HexMapVisualizer* visualizer;
+    bool quit;
+
+public:
+    HexApp(HexMapVisualizer* viz) : visualizer(viz), quit(false) {}
+
+    bool frameStarted(const Ogre::FrameEvent& evt) override {
+        std::cout << "Frame started!\n"; 
+        // Update visualization
+        if (visualizer) {
+            visualizer->update();
+        }
+
+        // Check if window is closed
+        if (Ogre::Root::getSingleton().getAutoCreatedWindow()->isClosed()) {
+            quit = true;
+             std::cout << "quit = true!\n"; 
+            return false;
+        }
+
+        return true;  // Continue rendering
     }
 };
 
@@ -432,82 +498,55 @@ public:
     }
 };
 
-// === Example main class ===
-class HexNavigationExample {
-private:
-    std::unique_ptr<HexNavigationGrid> navGrid;
-    std::unique_ptr<OgreBites::ApplicationContext> appCtx;
-    Ogre::SceneManager* sceneMgr;
-    std::unique_ptr<HexMapVisualizer> visualizer;
-    KeyHandler keyHandler;
+// === Main function ===
+int main() {
+    try {
+        std::cout << "Weighted Hexagonal Grid Navigation System\n";
+        std::cout << "=========================================\n\n";
 
-public:
-    HexNavigationExample() : navGrid(std::make_unique<HexNavigationGrid>(12, 10)),
-                           appCtx(std::make_unique<OgreBites::ApplicationContext>("HexagonalGridVisualizer")),
-                           sceneMgr(nullptr) {
-        setupExampleTerrain();
-    }
+        // Initialize Ogre application context
+        auto appCtx = std::make_unique<OgreBites::ApplicationContext>("HexagonalGridVisualizer");
+        appCtx->initApp();
+        
+        Ogre::Root* root = appCtx->getRoot();
+        Ogre::SceneManager* sceneMgr = root->createSceneManager();
 
-    void setupExampleTerrain() {
+        // Register our scene with the RTSS (Required for proper lighting/shaders)
+        Ogre::RTShader::ShaderGenerator* shadergen = Ogre::RTShader::ShaderGenerator::getSingletonPtr();
+        shadergen->addSceneManager(sceneMgr);
+
+        // Create visualizer
+        HexMapVisualizer visualizer(sceneMgr, appCtx->getRenderWindow());
+
+        // Create navigation grid and set up example terrain
+        HexNavigationGrid navGrid(12, 10);
+        
         // Sand: cost 2
         for (int i = 3; i < 8; i++) {
-            navGrid->setCost(i, 4, 2);
+            navGrid.setCost(i, 4, 2);
         }
 
         // Water: cost 3
         for (int i = 2; i < 6; i++) {
-            navGrid->setCost(6, i, 3);
+            navGrid.setCost(6, i, 3);
         }
 
         // Low cost path (like road)
         for (int i = 2; i < 10; i++) {
-            navGrid->setCost(i, 7, 1);
+            navGrid.setCost(i, 7, 1);
         }
 
         // Obstacles
-        navGrid->setCost(4, 3, HexNavigationGrid::OBSTACLE);
-        navGrid->setCost(7, 5, HexNavigationGrid::OBSTACLE);
-    }
+        navGrid.setCost(4, 3, HexNavigationGrid::OBSTACLE);
+        navGrid.setCost(7, 5, HexNavigationGrid::OBSTACLE);
 
-    bool initOgre() {
-        try {
-            std::cout << "Initializing app context.\n";
-            appCtx->initApp();
-            std::cout << "App context initialized.\n";
-
-            Ogre::Root* root = appCtx->getRoot();
-            sceneMgr = root->createSceneManager();
-
-            // Register our scene with the RTSS (Required for proper lighting/shaders)
-            Ogre::RTShader::ShaderGenerator* shadergen = Ogre::RTShader::ShaderGenerator::getSingletonPtr();
-            shadergen->addSceneManager(sceneMgr);
-
-            // Create visualizer
-            visualizer = std::make_unique<HexMapVisualizer>(sceneMgr, appCtx->getRenderWindow());
-
-            // Add input listener
-            appCtx->addInputListener(&keyHandler);
-
-            std::cout << "Ogre initialized successfully.\n";
-            return true;
-            
-        } catch (const std::exception& e) {
-            std::cerr << "Ogre initialization failed: " << e.what() << std::endl;
-            return false;
-        }
-    }
-
-    // Navigate and print dual maps
-    std::vector<Ogre::Vector2> navigate(int sx, int sy, int ex, int ey) {
-        std::cout << "Finding path from (" << sx << "," << sy << ") to (" << ex << "," << ey << "):\n";
-        
-        navGrid->printCostGrid();
-
-        auto path = navGrid->findPath(sx, sy, ex, ey);
-        
+        // Find path
+        std::cout << "Finding path from (1,1) to (10,8):\n";
+        navGrid.printCostGrid();
+        auto path = navGrid.findPath(1, 1, 10, 8);
         std::cout << "Path found with " << path.size() << " hexes\n";
         if (!path.empty()) {
-            float totalCost = navGrid->calculatePathCost(path);
+            float totalCost = navGrid.calculatePathCost(path);
             std::cout << "Total path cost: " << totalCost << "\n";
             std::cout << "Path: ";
             for (const auto& p : path) {
@@ -515,70 +554,35 @@ public:
             }
             std::cout << "\n";
         }
-
         std::cout << "\n";
-        navGrid->printPathGrid(sx, sy, ex, ey, path);
+        navGrid.printPathGrid(1, 1, 10, 8, path);
 
-        // === Use Ogre for visualization ===
-        if (visualizer) {
-            try {
-                visualizer->drawHexGrid(*navGrid);
-                visualizer->drawPath(*navGrid, path, sx, sy, ex, ey);
-                std::cout << "Ogre visualization updated.\n";
-            } catch (const std::exception& e) {
-                std::cerr << "Ogre rendering failed: " << e.what() << std::endl;
-            }
-        }
+        // Set data to visualizer (don't draw directly!)
+        visualizer.setGrid(navGrid);
+        visualizer.setPath(path, 1, 1, 10, 8);
 
-        std::cout << "\n" << std::string(50, '-') << "\n\n";
-        return path;
-    }
+        // Create frame listener for main loop
+        HexApp frameListener(&visualizer);
+        root->addFrameListener(&frameListener);
 
-    void runVisualization() {
-        if (appCtx && sceneMgr) {
-            std::cout << "Starting Ogre visualization... Press ESC to exit.\n";
-            try {
-                // Start rendering loop
-                appCtx->getRoot()->startRendering();
-                std::cout << "Rendering loop ended.\n";
-            } catch (const std::exception& e) {
-                std::cerr << "Ogre rendering loop error: " << e.what() << std::endl;
-            }
-        } else {
-            std::cout << "Ogre visualization not available.\n";
-        }
-    }
+        // Add input listener
+        KeyHandler keyHandler;
+        appCtx->addInputListener(&keyHandler);
 
-    HexNavigationGrid* getNavGrid() { return navGrid.get(); }
-};
+        std::cout << "Starting Ogre visualization... Press ESC to exit.\n";
 
-// === Main function ===
-int main() {
-    try {
-        HexNavigationExample hexNav;
+        // Start rendering loop - this will call frameStarted automatically
+        root->startRendering();
 
-        std::cout << "Weighted Hexagonal Grid Navigation System\n";
-        std::cout << "=========================================\n\n";
-
-        // Initialize Ogre first
-        if (!hexNav.initOgre()) {
-            std::cout << "Failed to initialize Ogre, continuing with text output only.\n";
-            return 1;
-        }
-
-        // Test paths
-        hexNav.navigate(1, 1, 10, 8);
-        hexNav.navigate(2, 2, 9, 7);
-
-        // Run Ogre visualization
-        hexNav.runVisualization();
-
-        // Clean up
         std::cout << "Closing application.\n";
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << "\n";
+        return 1;
     }
 
     return 0;
 }
+
+
+
