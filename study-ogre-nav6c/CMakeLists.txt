@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(OGRE REQUIRED)
 
 # 添加可执行文件
-add_executable(Study_Ogre main.cpp HexMapVisualizer.cpp)
+add_executable(Study_Ogre main.cpp)
 
 # 链接Ogre库
 target_link_libraries(Study_Ogre ${OGRE_LIBRARIES})
