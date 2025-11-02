@@ -1,0 +1,28 @@
+// File: media/materials/scripts/VertexColour.material
+// 
+vertex_program MyVertex glsl
+{
+    source myVertex.glsl
+}
+
+fragment_program MyFrag glsl
+{
+    source myFrag.glsl
+}
+material VertexColour
+{
+    receive_shadows off
+    technique
+    {
+        pass
+        {			
+			vertex_program_ref MyVertex
+			{
+				param_named_auto worldViewProj worldviewproj_matrix
+			}
+			fragment_program_ref MyFrag
+			{
+			}
+        }
+    }
+}
