@@ -356,6 +356,15 @@ public:
           gridDirty(false), pathDirty(false)
     {
 
+        // 假设你已经有 sceneMgr 和 camera
+        Ogre::Light *light = sceneMgr->createLight("MyPointLight");
+        light->setType(Ogre::Light::LT_POINT);
+        light->setDiffuseColour(Ogre::ColourValue(1.0, 1.0, 1.0));  // 白色漫反射
+        light->setSpecularColour(Ogre::ColourValue(1.0, 1.0, 1.0)); // 白色镜面光
+
+        Ogre::SceneNode *lightNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
+        lightNode->setPosition(0, 0, 500);
+        lightNode->attachObject(light);
         // Create camera
         camera = sceneMgr->createCamera("HexMapCamera");
         camera->setNearClipDistance(0.1f);
@@ -364,7 +373,7 @@ public:
 
         // Create camera node and set position and direction
         cameraNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
-        cameraNode->setPosition(0, 0, 500);
+        cameraNode->setPosition(0, -500, 500);
         cameraNode->attachObject(camera);
         cameraNode->lookAt(Ogre::Vector3(0, 0, 0), Ogre::Node::TS_PARENT);
 
@@ -400,15 +409,11 @@ public:
 
         // 配置 Pass
         Pass *pass = tech->getPass(0);
-        pass->setLightingEnabled(false);  // 关闭光照
-        pass->setDepthWriteEnabled(true); // 写入深度缓冲（推荐开启）
-        pass->setCullingMode(CULL_NONE);  // 双面渲染（适合六边形从上下看）
-
-        // 核心：启用顶点颜色混合
-        // 使用当前片段颜色（无纹理）与顶点颜色进行混合
-       // auto tu = pass->createTextureUnitState();
-        //tu->setColourOperation(LayerBlendOperation::LBO_REPLACE);
-
+        pass->setLightingEnabled(true);
+        pass->setVertexColourTracking(TrackVertexColourEnum::TVC_DIFFUSE);//漫反射
+        // pass->setVertexColourTracking(TrackVertexColourEnum::TVC_AMBIENT);//环境光
+        //pass->setVertexColourTracking(TrackVertexColourEnum::TVC_EMISSIVE);//自发光
+        // pass->setVertexColourTracking(TrackVertexColourEnum::TVC_SPECULAR);//镜面反射
         return mat;
     }
 
@@ -557,9 +562,9 @@ private:
         case HexNavigationGrid::OBSTACLE:
             return Ogre::ColourValue::Red;
         case HexNavigationGrid::DEFAULT_COST:
-        return Ogre::ColourValue(0.8f, 0.6f, 0.2f); // light Sand color
+            return Ogre::ColourValue(0.8f, 0.6f, 0.2f); // light Sand color
         case 2:
-        return Ogre::ColourValue(0.6f, 0.4f, 0.1f); // Dark Sand color
+            return Ogre::ColourValue(0.6f, 0.4f, 0.1f); // Dark Sand color
         case 3:
             return Ogre::ColourValue(0.2f, 0.4f, 0.8f); // Water color
         default:
@@ -582,12 +587,14 @@ private:
 
         // Center
         obj->position(center);
+        obj->normal(0, 0, 1);
         obj->colour(color * 0.7f);
 
         // Corners
         for (int i = 0; i < 6; ++i)
         {
             obj->position(vertices[i]);
+            obj->normal(0, 0, 1);
             obj->colour(color);
         }
 
@@ -612,17 +619,17 @@ public:
 
     bool frameStarted(const Ogre::FrameEvent &evt) override
     {
-        //std::cout << "Frame started!\n";
+        // std::cout << "Frame started!\n";
 
         // Move camera
         Ogre::Camera *camera = visualizer->getCamera();
         Ogre::SceneNode *node = camera->getParentSceneNode();
         // 获取当前朝向（四元数）
-        Ogre::Quaternion orientation = node->getOrientation();
+        //Ogre::Quaternion orientation = node->getOrientation();
 
         // 计算右向量（X轴）
-        Ogre::Vector3 right = orientation * Ogre::Vector3::UNIT_X;
-        Ogre::Vector3 up = orientation * Ogre::Vector3::UNIT_Y;
+        Ogre::Vector3 right = Ogre::Vector3::UNIT_X;
+        Ogre::Vector3 up = Ogre::Vector3::UNIT_Y;
         float speed = 100.0f;
 
         if (inputState.up)
@@ -733,6 +740,7 @@ int main()
         // Register our scene with the RTSS (Required for proper lighting/shaders)
         Ogre::RTShader::ShaderGenerator *shadergen = Ogre::RTShader::ShaderGenerator::getSingletonPtr();
         shadergen->addSceneManager(sceneMgr);
+
         // Ogre::RTShader::RenderState* renderState = shadergen->getRenderState(Ogre::RTShader::RS_DEFAULT);
         // std::string techName = "VertexColourTech";
         // Ogre::Pass *pass=nullptr;
