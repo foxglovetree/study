@@ -1,27 +1,39 @@
 #pragma once
 #include <OgreApplicationContext.h>
+#include <OgreLogManager.h>
 #include "HexMapVisualizer.h"
 #include "HexGridPrinter.h"
 #include "InputState.h"
-#include "HexApp.h"
-#include "KeyHandler.h"
-
+#include "CameraUpdater.h"
+#include "InputStateModifier.h"
 using namespace OgreBites;
-
+using namespace Ogre;
 class HexGridApp : public ApplicationContext
 {
 private:
     InputState inputState;
-    HexNavigationGrid navGrid{12, 10};
+    GridManager navGrid{12, 10};
     HexMapVisualizer *visualizer;
+    CameraUpdater *frameListener;
+    InputStateModifier *keyHandler;
 
 public:
     HexGridApp() : ApplicationContext("HexagonalGridVisualizer")
     {
     }
-    void initApp() 
-    { 
+    void initApp()
+    {
         ApplicationContextBase::initApp();
+        // log level
+        LogManager *lm = LogManager::getSingletonPtr();
+        Log *log = lm->getDefaultLog();
+        log->setDebugOutputEnabled(false);
+        log->setLogDetail(Ogre::LL_LOW);
+        //
+        InputListener *ls = getImGuiInputListener();
+
+        RenderWindow *window = this->getRenderWindow();
+
         Ogre::Root *root = getRoot();
         Ogre::SceneManager *sceneMgr = root->createSceneManager();
 
@@ -56,8 +68,8 @@ public:
         }
 
         // Obstacles
-        navGrid.setCost(4, 3, HexNavigationGrid::OBSTACLE);
-        navGrid.setCost(7, 5, HexNavigationGrid::OBSTACLE);
+        navGrid.setCost(4, 3, GridManager::OBSTACLE);
+        navGrid.setCost(7, 5, GridManager::OBSTACLE);
 
         visualizer = new HexMapVisualizer(sceneMgr, getRenderWindow());
 
@@ -65,12 +77,12 @@ public:
         visualizer->setGrid(navGrid);
 
         // Create frame listener for main loop
-        HexApp frameListener(visualizer, inputState);
-        root->addFrameListener(&frameListener);
+        frameListener = new CameraUpdater(visualizer, inputState);
+        root->addFrameListener(frameListener);
 
         // Add input listener
-        KeyHandler keyHandler(inputState);
-        addInputListener(&keyHandler);
+        keyHandler = new InputStateModifier(inputState, window);
+        addInputListener(keyHandler);
 
         std::cout << "Starting Ogre visualization... Press ESC to exit.\n";
     }

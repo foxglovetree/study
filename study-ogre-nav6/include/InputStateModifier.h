@@ -24,18 +24,40 @@
 #include <OgreRTShaderSystem.h>
 #include <OgreTechnique.h>
 #include "InputState.h"
-
+#include <OgreRenderWindow.h>
+#include <iostream>
+using namespace OgreBites;
+using namespace Ogre;
+using namespace std;
 // === Custom hash function ===
 //
 // === Input handler for closing application ===
-class KeyHandler : public OgreBites::InputListener
+class InputStateModifier : public OgreBites::InputListener
 {
 private:
     InputState &inputState;
+    RenderWindow *window;
 
 public:
-    KeyHandler(InputState &inputState) : inputState(inputState) {};
-    
+    InputStateModifier(InputState &inputState, RenderWindow *window) : inputState(inputState), window(window) {};
+
+    bool mouseMoved(const MouseMotionEvent &evt) override
+    {
+        int width = window->getWidth();
+        int height = window->getHeight();
+        // 定义边缘区域（例如：10 像素）
+        int edgeSize = 10;
+        int x = evt.x;
+        int y =evt.y;
+        inputState.left = (x <= edgeSize);
+        inputState.right = (x >= width - edgeSize);
+        inputState.up = (y <= edgeSize);
+        inputState.down = (y >= height - edgeSize);
+        cout << "(" << x << "," << y << "),(" << width << "," << height << ")" << endl;
+
+        return true;
+    }
+
     bool keyPressed(const OgreBites::KeyboardEvent &evt) override
     {
         if (evt.keysym.sym == OgreBites::SDLK_ESCAPE)

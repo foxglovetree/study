@@ -23,8 +23,8 @@
 #include <OgreFrameListener.h>
 #include <OgreRTShaderSystem.h>
 #include <OgreTechnique.h>
-#include "HexNavigationGrid.h"
+#include "GridManager.h"
 #include "HexMapVisualizer.h"
 // === Custom hash function ===
 
-#include "HexApp.h"
+#include "CameraUpdater.h"

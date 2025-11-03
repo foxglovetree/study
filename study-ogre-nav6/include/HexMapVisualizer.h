@@ -23,7 +23,7 @@
 #include <OgreFrameListener.h>
 #include <OgreRTShaderSystem.h>
 #include <OgreTechnique.h>
-#include "HexNavigationGrid.h"
+#include "GridManager.h"
 // === Custom hash function ===
 //
 // === Hexagonal Map Visualizer class ===
@@ -41,7 +41,7 @@ private:
     float hexSize;
 
     // Current state
-    const HexNavigationGrid *currentGrid;
+    const GridManager *currentGrid;
     std::vector<Ogre::Vector2> currentPath;
     int startx, starty, endx, endy;
     bool gridDirty;
@@ -122,7 +122,7 @@ public:
         return this->camera;
     }
 
-    void setGrid(const HexNavigationGrid &grid)
+    void setGrid(const GridManager &grid)
     {
         currentGrid = &grid;
         gridDirty = true;
@@ -183,7 +183,7 @@ private:
                 auto vertices = currentGrid->getHexagonVertices(x, y, hexSize);
 
                 // Draw hexagon (triangle fan)
-                if (cost == HexNavigationGrid::OBSTACLE)
+                if (cost == GridManager::OBSTACLE)
                 {
                     // Obstacles in red
                     drawHexagonTo(hexGridObject, vertices, color);
@@ -259,9 +259,9 @@ private:
     {
         switch (cost)
         {
-        case HexNavigationGrid::OBSTACLE:
+        case GridManager::OBSTACLE:
             return Ogre::ColourValue::Red;
-        case HexNavigationGrid::DEFAULT_COST:
+        case GridManager::DEFAULT_COST:
             return Ogre::ColourValue(0.8f, 0.6f, 0.2f); // light Sand color
         case 2:
             return Ogre::ColourValue(0.6f, 0.4f, 0.1f); // Dark Sand color

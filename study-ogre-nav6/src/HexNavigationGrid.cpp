@@ -22,6 +22,6 @@
 #include <OgreFrameListener.h>
 #include <OgreRTShaderSystem.h>
 #include <OgreTechnique.h>
-#include "HexNavigationGrid.h"
+#include "GridManager.h"
 
 

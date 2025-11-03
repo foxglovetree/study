@@ -23,6 +23,7 @@
 #include <OgreFrameListener.h>
 #include <OgreRTShaderSystem.h>
 #include <OgreTechnique.h>
+#include "GridState.h"
 
 struct PairHash
 {
@@ -45,7 +46,7 @@ struct NavNode
 };
 
 
-class HexNavigationGrid
+class GridManager
 {
 private:
 
@@ -58,13 +59,14 @@ int dy_odd[6] = {0, -1, -1, 0, +1, +1};
 
 public:
 std::vector<std::vector<int>> costGrid;
+std::vector<std::vector<GridState>> gridStates;
 int width, height;
 
 public:
     static const int OBSTACLE = 0;
     static const int DEFAULT_COST = 1;
 
-    HexNavigationGrid(int w, int h) : width(w), height(h)
+    GridManager(int w, int h) : width(w), height(h)
     {
         costGrid.resize(height, std::vector<int>(width, DEFAULT_COST));
     }

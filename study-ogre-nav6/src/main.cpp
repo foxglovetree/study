@@ -1,5 +1,5 @@
 // main.cpp - Complete Ogre A* Hex Grid Visualization System
-
+#define SDL_MAIN_HANDLED
 #include <iostream>
 #include <vector>
 #include <queue>
@@ -23,10 +23,8 @@
 #include <OgreFrameListener.h>
 #include <OgreRTShaderSystem.h>
 #include <OgreTechnique.h>
-#include "HexNavigationGrid.h"
+#include "GridManager.h"
 #include "HexMapVisualizer.h"
-#include "HexApp.h"
-#include "KeyHandler.h"
 #include "HexGridPrinter.h"
 #include "HexGridApp.h"
 // === Custom hash function ===

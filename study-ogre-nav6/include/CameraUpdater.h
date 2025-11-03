@@ -23,7 +23,7 @@
 #include <OgreFrameListener.h>
 #include <OgreRTShaderSystem.h>
 #include <OgreTechnique.h>
-#include "HexNavigationGrid.h"
+#include "GridManager.h"
 #include "HexMapVisualizer.h"
 #include "InputState.h"
 
@@ -31,7 +31,7 @@
 
 
 // === Frame Listener class for main loop ===
-class HexApp : public Ogre::FrameListener
+class CameraUpdater : public Ogre::FrameListener
 {
 private:
     HexMapVisualizer *visualizer;
@@ -40,7 +40,7 @@ private:
     InputState& inputState;
 
 public:
-    HexApp(HexMapVisualizer *viz, InputState& inputState) : visualizer(viz), quit(false),inputState(inputState) {}
+    CameraUpdater(HexMapVisualizer *viz, InputState& inputState) : visualizer(viz), quit(false),inputState(inputState) {}
 
     bool frameStarted(const Ogre::FrameEvent &evt) override
     {
@@ -55,7 +55,7 @@ public:
         // 计算右向量（X轴）
         Ogre::Vector3 right = Ogre::Vector3::UNIT_X;
         Ogre::Vector3 up = Ogre::Vector3::UNIT_Y;
-        float speed = 100.0f;
+        float speed = 1000.0f;
 
         if (inputState.up)
         {
@@ -77,15 +77,6 @@ public:
         if (visualizer)
         {
             visualizer->update();
-        }
-        Ogre::Root &root = Ogre::Root::getSingleton();
-        Ogre::RenderWindow *window = root.getAutoCreatedWindow();
-        // Check if window is closed
-        if (window != nullptr && window->isClosed())
-        {
-            quit = true;
-            std::cout << "quit = true!\n";
-            return false;
         }
 
         return true; // Continue rendering
