@@ -216,19 +216,19 @@ public:
 
     // Get hexagon vertices
     // anti-clockwise
-    std::vector<Ogre::Vector2> getHexagonVerticesForXZ(int x, int z, float size) const
+    std::vector<Ogre::Vector2> getHexagonVerticesForXZ(int x, int z, float rad, float scale = 1.0f) const
     {
         std::vector<Ogre::Vector2> vertices(6);
-        float centerX = x * size * 1.5f;
-        float centerZ = z * size * std::sqrt(3.0f);
-        if (z % 2 == 1)
-            centerX += size * 0.75f;
+        float centerX = x * 2 * rad + (z % 2 == 0 ? 0 : rad);
+        float centerZ = z * rad * std::sqrt(3.0f);
+
+        float RAD = scale * 2 * rad / std::sqrt(3.0f);
 
         for (int i = 0; i < 6; i++)
         {
             float angle_rad = (60.0f * i + 30.0f) * Ogre::Math::PI / 180.0f;
-            float dx = size * std::cos(angle_rad);
-            float dz = size * std::sin(angle_rad);
+            float dx = RAD * std::cos(angle_rad);
+            float dz = RAD * std::sin(angle_rad);
 
             vertices[6 - i - 1] = Ogre::Vector2(centerX + dx, centerZ + dz);
         }

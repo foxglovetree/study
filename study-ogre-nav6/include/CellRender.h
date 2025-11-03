@@ -232,8 +232,8 @@ private:
                 {
                     selectedObject->begin(materialNameSelected, Ogre::RenderOperation::OT_TRIANGLE_STRIP);
 
-                    auto verticesInner = costMap.getHexagonVerticesForXZ(x, y, hexSize * 0.85);
-                    auto verticesOuter = costMap.getHexagonVerticesForXZ(x, y, hexSize * 0.95);
+                    auto verticesInner = costMap.getHexagonVerticesForXZ(x, y, hexSize , 0.75f);
+                    auto verticesOuter = costMap.getHexagonVerticesForXZ(x, y, hexSize , 0.95f);
                     drawHexagonRing(selectedObject, verticesInner, verticesOuter, ColourValue(1.0f, 1.0f, 0.8f, 0.0f), ColourValue(1.0f, 1.0f, 0.8f, 0.6f));
                     selectedObject->end();
                 }
