@@ -23,8 +23,8 @@
 #include <OgreFrameListener.h>
 #include <OgreRTShaderSystem.h>
 #include <OgreTechnique.h>
-#include "GridManager.h"
-#include "HexMapVisualizer.h"
+#include "CostMap.h"
+#include "CellRender.h"
 #include "InputState.h"
 
 // === Custom hash function ===
@@ -34,36 +34,36 @@
 class CameraUpdater : public Ogre::FrameListener
 {
 private:
-    HexMapVisualizer *visualizer;
+    CellRender *render;
     bool quit;
 
     InputState& inputState;
 
 public:
-    CameraUpdater(HexMapVisualizer *viz, InputState& inputState) : visualizer(viz), quit(false),inputState(inputState) {}
+    CameraUpdater(CellRender *viz, InputState& inputState) : render(viz), quit(false),inputState(inputState) {}
 
     bool frameStarted(const Ogre::FrameEvent &evt) override
     {
         // std::cout << "Frame started!\n";
 
         // Move camera
-        Ogre::Camera *camera = visualizer->getCamera();
+        Ogre::Camera *camera = render->getCamera();
         Ogre::SceneNode *node = camera->getParentSceneNode();
         // 获取当前朝向（四元数）
         //Ogre::Quaternion orientation = node->getOrientation();
 
         // 计算右向量（X轴）
         Ogre::Vector3 right = Ogre::Vector3::UNIT_X;
-        Ogre::Vector3 up = Ogre::Vector3::UNIT_Y;
+        Ogre::Vector3 down = Ogre::Vector3::UNIT_Z;
         float speed = 1000.0f;
 
         if (inputState.up)
         {
-            node->translate(up * speed * evt.timeSinceLastFrame);
+            node->translate(-down * speed * evt.timeSinceLastFrame);
         }
         if (inputState.down)
         {
-            node->translate(-up * speed * evt.timeSinceLastFrame);
+            node->translate(down * speed * evt.timeSinceLastFrame);
         }
         if (inputState.left)
         {
@@ -74,9 +74,9 @@ public:
             node->translate(right * speed * evt.timeSinceLastFrame);
         }
         // Update visualization
-        if (visualizer)
+        if (render)
         {
-            visualizer->update();
+            render->update();
         }
 
         return true; // Continue rendering

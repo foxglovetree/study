@@ -26,20 +26,23 @@
 #include "InputState.h"
 #include <OgreRenderWindow.h>
 #include <iostream>
+#include "CellManager.h"
+
 using namespace OgreBites;
 using namespace Ogre;
 using namespace std;
 // === Custom hash function ===
 //
 // === Input handler for closing application ===
-class InputStateModifier : public OgreBites::InputListener
+class MainInputListener : public OgreBites::InputListener
 {
 private:
     InputState &inputState;
     RenderWindow *window;
+    CellManager &cells;
 
 public:
-    InputStateModifier(InputState &inputState, RenderWindow *window) : inputState(inputState), window(window) {};
+    MainInputListener(InputState &inputState, RenderWindow *window, CellManager &cells) : inputState(inputState), window(window), cells(cells) {};
 
     bool mouseMoved(const MouseMotionEvent &evt) override
     {
@@ -48,7 +51,7 @@ public:
         // 定义边缘区域（例如：10 像素）
         int edgeSize = 10;
         int x = evt.x;
-        int y =evt.y;
+        int y = evt.y;
         inputState.left = (x <= edgeSize);
         inputState.right = (x >= width - edgeSize);
         inputState.up = (y <= edgeSize);

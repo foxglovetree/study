@@ -23,11 +23,11 @@
 #include <OgreFrameListener.h>
 #include <OgreRTShaderSystem.h>
 #include <OgreTechnique.h>
-#include "GridManager.h"
+#include "CellManager.h"
 // === Custom hash function ===
 //
 // === Hexagonal Map Visualizer class ===
-class HexMapVisualizer
+class CellRender
 {
 private:
     Ogre::SceneManager *sceneMgr;
@@ -40,20 +40,20 @@ private:
     Ogre::SceneNode *pathNode;
     float hexSize;
 
-    // Current state
-    const GridManager *currentGrid;
     std::vector<Ogre::Vector2> currentPath;
     int startx, starty, endx, endy;
     bool gridDirty;
     bool pathDirty;
 
-    std::string materialNameToCreate="ABC";
-    std::string materialNameInUse="ABC";
+    std::string materialNameToCreate = "ABC";
+    std::string materialNameInUse = "ABC";
+    CellManager &cells;
+
 public:
-    HexMapVisualizer(Ogre::SceneManager *mgr, Ogre::RenderWindow *win, float size = 30.0f)
+    CellRender(Ogre::SceneManager *mgr, Ogre::RenderWindow *win, CellManager &cells, float size = 30.0f)
         : sceneMgr(mgr), window(win), hexSize(size),
-          currentGrid(nullptr), startx(-1), starty(-1), endx(-1), endy(-1),
-          gridDirty(false), pathDirty(false)
+          cells(cells), startx(-1), starty(-1), endx(-1), endy(-1),
+          gridDirty(true), pathDirty(false)
     {
 
         // 假设你已经有 sceneMgr 和 camera
@@ -63,7 +63,7 @@ public:
         light->setSpecularColour(Ogre::ColourValue(1.0, 1.0, 1.0)); // 白色镜面光
 
         Ogre::SceneNode *lightNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
-        lightNode->setPosition(0, 0, 500);
+        lightNode->setPosition(0, 500, 0);
         lightNode->attachObject(light);
         // Create camera
         camera = sceneMgr->createCamera("HexMapCamera");
@@ -73,7 +73,7 @@ public:
 
         // Create camera node and set position and direction
         cameraNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
-        cameraNode->setPosition(0, -500, 500);
+        cameraNode->setPosition(0, 500, 500);
         cameraNode->attachObject(camera);
         cameraNode->lookAt(Ogre::Vector3(0, 0, 0), Ogre::Node::TS_PARENT);
 
@@ -110,9 +110,9 @@ public:
         // 配置 Pass
         Pass *pass = tech->getPass(0);
         pass->setLightingEnabled(true);
-        pass->setVertexColourTracking(TrackVertexColourEnum::TVC_DIFFUSE);//漫反射
+        pass->setVertexColourTracking(TrackVertexColourEnum::TVC_DIFFUSE); // 漫反射
         // pass->setVertexColourTracking(TrackVertexColourEnum::TVC_AMBIENT);//环境光
-        //pass->setVertexColourTracking(TrackVertexColourEnum::TVC_EMISSIVE);//自发光
+        // pass->setVertexColourTracking(TrackVertexColourEnum::TVC_EMISSIVE);//自发光
         // pass->setVertexColourTracking(TrackVertexColourEnum::TVC_SPECULAR);//镜面反射
         return mat;
     }
@@ -120,12 +120,6 @@ public:
     Ogre::Camera *getCamera()
     {
         return this->camera;
-    }
-
-    void setGrid(const GridManager &grid)
-    {
-        currentGrid = &grid;
-        gridDirty = true;
     }
 
     void setPath(const std::vector<Ogre::Vector2> &path, int sx, int sy, int ex, int ey)
@@ -140,9 +134,6 @@ public:
 
     void update()
     {
-
-        if (!currentGrid)
-            return;
 
         if (gridDirty)
         {
@@ -160,30 +151,26 @@ public:
 private:
     void drawHexGrid()
     {
-        std::cout << "Drawing hex grid... width=" << currentGrid->getWidth()
-                  << ", height=" << currentGrid->getHeight() << std::endl;
-        if (!currentGrid)
-            return;
 
         hexGridObject->clear();
 
-        int width = currentGrid->getWidth();
-        int height = currentGrid->getHeight();
+        int width = cells.getWidth();
+        int height = cells.getHeight();
 
         // Begin the manual object
         hexGridObject->begin(materialNameInUse, Ogre::RenderOperation::OT_TRIANGLE_LIST);
-
+        CostMap &costMap = cells.getCostMap();
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
             {
-                int cost = currentGrid->getCost(x, y);
+                int cost = costMap.getCost(x, y);
                 Ogre::ColourValue color = getCostColor(cost);
 
-                auto vertices = currentGrid->getHexagonVertices(x, y, hexSize);
+                auto vertices = costMap.getHexagonVertices(x, y, hexSize);
 
                 // Draw hexagon (triangle fan)
-                if (cost == GridManager::OBSTACLE)
+                if (cost == CostMap::OBSTACLE)
                 {
                     // Obstacles in red
                     drawHexagonTo(hexGridObject, vertices, color);
@@ -222,14 +209,15 @@ private:
         // Begin the manual object
         pathObject->begin(materialNameInUse, Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
-        int width = currentGrid->getWidth();
-        int height = currentGrid->getHeight();
+        int width = cells.getWidth();
+        int height = cells.getHeight();
+        CostMap &costMap = cells.getCostMap();
 
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
             {
-                auto vertices = currentGrid->getHexagonVertices(x, y, hexSize);
+                auto vertices = costMap.getHexagonVertices(x, y, hexSize);
 
                 if (x == startx && y == starty)
                 {
@@ -259,9 +247,9 @@ private:
     {
         switch (cost)
         {
-        case GridManager::OBSTACLE:
+        case CostMap::OBSTACLE:
             return Ogre::ColourValue::Red;
-        case GridManager::DEFAULT_COST:
+        case CostMap::DEFAULT_COST:
             return Ogre::ColourValue(0.8f, 0.6f, 0.2f); // light Sand color
         case 2:
             return Ogre::ColourValue(0.6f, 0.4f, 0.1f); // Dark Sand color
@@ -274,11 +262,14 @@ private:
 
     // Draw a single hexagon to a specific object
     void drawHexagonTo(Ogre::ManualObject *obj,
-                       const std::vector<Ogre::Vector3> &vertices,
+                       const std::vector<Ogre::Vector2> &vertices,
                        const Ogre::ColourValue &color)
     {
+        const float nomX = 0;
+        const float nomY = 1;
+        const float nomZ = 0;
         // Compute center
-        Ogre::Vector3 center(0, 0, 0);
+        Ogre::Vector2 center(0, 0);
         for (auto &v : vertices)
             center += v;
         center *= (1.0f / 6.0f);
@@ -286,24 +277,24 @@ private:
         size_t baseIndex = obj->getCurrentVertexCount();
 
         // Center
-        obj->position(center);
-        obj->normal(0, 0, 1);
+        obj->position(center.x, 0, center.y);
+        obj->normal(nomX, nomY, nomZ);
         obj->colour(color * 0.7f);
 
         // Corners
         for (int i = 0; i < 6; ++i)
         {
-            obj->position(vertices[i]);
-            obj->normal(0, 0, 1);
+            obj->position(vertices[i].x, 0, vertices[i].y);
+            obj->normal(nomX, nomY, nomZ);
             obj->colour(color);
         }
 
         // Triangles
         for (int i = 0; i < 6; ++i)
         {
-            int next = (i + 1) % 6;
-            obj->triangle(baseIndex, baseIndex + i + 1, baseIndex + next + 1);
+            int pre = baseIndex + (i + 1) % 6 + 1;
+            int next = baseIndex + i + 1;
+            obj->triangle(baseIndex, pre, next);
         }
     }
 };
-

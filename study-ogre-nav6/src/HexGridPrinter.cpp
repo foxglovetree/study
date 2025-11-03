@@ -1,7 +1,7 @@
 #include <iostream>
 #include "HexGridPrinter.h"
 
-void HexGridPrinter::printCostGrid(GridManager &grid)
+void HexGridPrinter::printCostGrid(CostMap &grid)
 {
     std::cout << "Original Cost Grid (0=obstacle, 1=normal, 2=costly, 3=very costly):\n";
     for (int y = 0; y < grid.height; y++)
@@ -26,7 +26,7 @@ void HexGridPrinter::printCostGrid(GridManager &grid)
 }
 
 // === Print path result grid ===
-void HexGridPrinter::printPathGrid(GridManager &grid, int startx , int starty , int endx , int endy ,
+void HexGridPrinter::printPathGrid(CostMap &grid, int startx , int starty , int endx , int endy ,
                                    const std::vector<Ogre::Vector2> &path)
 {
     std::cout << "Path Result (S=start, E=end, *=path, number=cost):\n";
@@ -54,7 +54,7 @@ void HexGridPrinter::printPathGrid(GridManager &grid, int startx , int starty , 
             {
                 c = 'E';
             }
-            else if (cost == GridManager::OBSTACLE)
+            else if (cost == CostMap::OBSTACLE)
             {
                 c = '#';
             }
@@ -65,7 +65,7 @@ void HexGridPrinter::printPathGrid(GridManager &grid, int startx , int starty , 
             }
             else
             {
-                if (cost == GridManager::DEFAULT_COST)
+                if (cost == CostMap::DEFAULT_COST)
                 {
                     c = '.'; // Default cost shown as dot
                 }

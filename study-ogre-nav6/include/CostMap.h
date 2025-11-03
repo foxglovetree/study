@@ -23,7 +23,6 @@
 #include <OgreFrameListener.h>
 #include <OgreRTShaderSystem.h>
 #include <OgreTechnique.h>
-#include "GridState.h"
 
 struct PairHash
 {
@@ -46,7 +45,7 @@ struct NavNode
 };
 
 
-class GridManager
+class CostMap
 {
 private:
 
@@ -59,17 +58,19 @@ int dy_odd[6] = {0, -1, -1, 0, +1, +1};
 
 public:
 std::vector<std::vector<int>> costGrid;
-std::vector<std::vector<GridState>> gridStates;
 int width, height;
 
 public:
     static const int OBSTACLE = 0;
     static const int DEFAULT_COST = 1;
 
-    GridManager(int w, int h) : width(w), height(h)
+
+    CostMap(int w, int h) : width(w), height(h)
     {
         costGrid.resize(height, std::vector<int>(width, DEFAULT_COST));
+        
     }
+
 
     void setCost(int x, int y, int cost)
     {
@@ -221,10 +222,11 @@ public:
     int getWidth() const { return width; }
     int getHeight() const { return height; }
 
+
     // Get hexagon vertices (for Ogre rendering)
-    std::vector<Ogre::Vector3> getHexagonVertices(int x, int y, float size) const
+    std::vector<Ogre::Vector2> getHexagonVertices(int x, int y, float size) const
     {
-        std::vector<Ogre::Vector3> vertices(6);
+        std::vector<Ogre::Vector2> vertices(6);
         float centerX = x * size * 1.5f;
         float centerY = y * size * std::sqrt(3.0f);
         if (y % 2 == 1)
@@ -235,7 +237,7 @@ public:
             float angle_rad = (60.0f * i + 30.0f) * 3.1415926f / 180.0f;
             float dx = size * std::cos(angle_rad);
             float dy = size * std::sin(angle_rad);
-            vertices[i] = Ogre::Vector3(centerX + dx, centerY + dy, 0.0f);
+            vertices[i] = Ogre::Vector2(centerX + dx, centerY + dy);
         }
 
         return vertices;
