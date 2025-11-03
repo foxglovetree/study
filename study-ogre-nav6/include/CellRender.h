@@ -195,11 +195,32 @@ public:
     }
 
 private:
+    void drawHexagonRing(Ogre::ManualObject *obj,
+                         const std::vector<Ogre::Vector2> &verticesInner,
+                         const std::vector<Ogre::Vector2> &verticesOuter,
+                         const Ogre::ColourValue &colorInner,
+                         ColourValue &colorOuter)
+    {
+        const float nomX = 0;
+        const float nomY = 1;
+        const float nomZ = 0;
+
+        for (int i = 0; i < 7; i++)
+        {
+            int idx = i % 6;
+            obj->position(verticesInner[idx].x, 0, verticesInner[idx].y);
+            obj->normal(nomX, nomY, nomZ);
+            obj->colour(colorInner);
+
+            obj->position(verticesOuter[idx].x, 0, verticesOuter[idx].y);
+            obj->normal(nomX, nomY, nomZ);
+            obj->colour(colorOuter);
+        }
+    }
 
     void drawSelected()
     {
         selectedObject->clear();
-        selectedObject->begin(materialNameSelected, Ogre::RenderOperation::OT_TRIANGLE_LIST);
         int width = cells->getWidth();
         int height = cells->getHeight();
         CostMap &costMap = cells->getCostMap();
@@ -209,14 +230,15 @@ private:
             {
                 if (cells->getSelected(x, y))
                 {
+                    selectedObject->begin(materialNameSelected, Ogre::RenderOperation::OT_TRIANGLE_STRIP);
 
-                    auto vertices = costMap.getHexagonVerticesForXZ(x, y, hexSize * 0.95);
-                    drawHexagonTo(selectedObject, vertices, ColourValue(1.0f, 1.0f, 0.8f, 0.0f), ColourValue(1.0f, 1.0f, 0.8f, 0.6f));
+                    auto verticesInner = costMap.getHexagonVerticesForXZ(x, y, hexSize * 0.85);
+                    auto verticesOuter = costMap.getHexagonVerticesForXZ(x, y, hexSize * 0.95);
+                    drawHexagonRing(selectedObject, verticesInner, verticesOuter, ColourValue(1.0f, 1.0f, 0.8f, 0.0f), ColourValue(1.0f, 1.0f, 0.8f, 0.6f));
+                    selectedObject->end();
                 }
             }
         }
-
-        selectedObject->end();
     }
 
     void drawHexGrid()
@@ -323,6 +345,7 @@ private:
     {
         drawHexagonTo(obj, vertices, color1, color1);
     }
+
     void drawHexagonTo(Ogre::ManualObject *obj,
                        const std::vector<Ogre::Vector2> &vertices,
                        const Ogre::ColourValue &color1, ColourValue color2)
