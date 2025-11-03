@@ -29,7 +29,6 @@
 
 // === Custom hash function ===
 
-
 // === Frame Listener class for main loop ===
 class CameraUpdater : public Ogre::FrameListener
 {
@@ -37,10 +36,10 @@ private:
     CellRender *render;
     bool quit;
 
-    InputState& inputState;
+    InputState &inputState;
 
 public:
-    CameraUpdater(CellRender *viz, InputState& inputState) : render(viz), quit(false),inputState(inputState) {}
+    CameraUpdater(CellRender *viz, InputState &inputState) : render(viz), quit(false), inputState(inputState) {}
 
     bool frameStarted(const Ogre::FrameEvent &evt) override
     {
@@ -50,20 +49,21 @@ public:
         Ogre::Camera *camera = render->getCamera();
         Ogre::SceneNode *node = camera->getParentSceneNode();
         // 获取当前朝向（四元数）
-        //Ogre::Quaternion orientation = node->getOrientation();
+        // Ogre::Quaternion orientation = node->getOrientation();
 
         // 计算右向量（X轴）
         Ogre::Vector3 right = Ogre::Vector3::UNIT_X;
-        Ogre::Vector3 down = Ogre::Vector3::UNIT_Z;
+        Ogre::Vector3 back = Ogre::Vector3::UNIT_Z;
+
         float speed = 1000.0f;
 
-        if (inputState.up)
+        if (inputState.front)
         {
-            node->translate(-down * speed * evt.timeSinceLastFrame);
+            node->translate(-back * speed * evt.timeSinceLastFrame);
         }
-        if (inputState.down)
+        if (inputState.back)
         {
-            node->translate(down * speed * evt.timeSinceLastFrame);
+            node->translate(back * speed * evt.timeSinceLastFrame);
         }
         if (inputState.left)
         {
@@ -73,6 +73,8 @@ public:
         {
             node->translate(right * speed * evt.timeSinceLastFrame);
         }
+       
+
         // Update visualization
         if (render)
         {

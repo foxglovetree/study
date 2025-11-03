@@ -101,8 +101,8 @@ public:
         int y = evt.y;
         inputState.left = (x <= edgeSize);
         inputState.right = (x >= width - edgeSize);
-        inputState.up = (y <= edgeSize);
-        inputState.down = (y >= height - edgeSize);
+        inputState.front = (y <= edgeSize);
+        inputState.back = (y >= height - edgeSize);
         if (inputState.isMoving())
         {
             cout << "(" << x << "," << y << "),(" << width << "," << height << ")" << endl;
@@ -114,7 +114,14 @@ public:
         }
         return true;
     }
+    bool mouseWheelRolled(const MouseWheelEvent &evt) override
+    {
+        Ogre::SceneNode *node = camera->getParentSceneNode();
+        float speed = 20.0f;
+        node->translate(Ogre::Vector3::UNIT_Y * evt.y * speed);
 
+        return true;
+    }
     bool keyPressed(const OgreBites::KeyboardEvent &evt) override
     {
         if (evt.keysym.sym == OgreBites::SDLK_ESCAPE)
@@ -131,11 +138,11 @@ public:
         }
         if (evt.keysym.sym == OgreBites::SDLK_UP)
         {
-            inputState.up = true;
+            inputState.front = true;
         }
         if (evt.keysym.sym == OgreBites::SDLK_DOWN)
         {
-            inputState.down = true;
+            inputState.back = true;
         }
         return true;
     }
@@ -152,11 +159,11 @@ public:
         }
         if (evt.keysym.sym == OgreBites::SDLK_UP)
         {
-            inputState.up = false;
+            inputState.front = false;
         }
         if (evt.keysym.sym == OgreBites::SDLK_DOWN)
         {
-            inputState.down = false;
+            inputState.back = false;
         }
         return true;
     }

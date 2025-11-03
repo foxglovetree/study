@@ -82,7 +82,7 @@ public:
 
         // Create camera node and set position and direction
         cameraNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
-        cameraNode->setPosition(0, 500, 0); //
+        cameraNode->setPosition(0, 500, 500); //
         cameraNode->attachObject(camera);
         cameraNode->lookAt(Ogre::Vector3(0, 0, 0), Ogre::Node::TS_PARENT);
 
@@ -130,10 +130,10 @@ public:
         Pass *pass = tech->getPass(0);
         pass->setVertexColourTracking(TrackVertexColourEnum::TVC_EMISSIVE); // 自发光
         pass->setSceneBlending(Ogre::SceneBlendType::SBT_TRANSPARENT_ALPHA);
-        pass->setDepthCheckEnabled(true);
+        pass->setDepthCheckEnabled(false);
         pass->setLightingEnabled(false);
         pass->setSelfIllumination(1, 1, 0.8);
-        pass->setDepthBias(0, -1);
+        pass->setDepthBias(1.0f, 0.0f);
         return mat;
     }
     Ogre::MaterialPtr createVertexColourMaterial()
@@ -232,8 +232,8 @@ private:
                 {
                     selectedObject->begin(materialNameSelected, Ogre::RenderOperation::OT_TRIANGLE_STRIP);
 
-                    auto verticesInner = costMap.getHexagonVerticesForXZ(x, y, hexSize , 0.75f);
-                    auto verticesOuter = costMap.getHexagonVerticesForXZ(x, y, hexSize , 0.95f);
+                    auto verticesInner = costMap.getHexagonVerticesForXZ(x, y, hexSize, 0.75f);
+                    auto verticesOuter = costMap.getHexagonVerticesForXZ(x, y, hexSize, 0.95f);
                     drawHexagonRing(selectedObject, verticesInner, verticesOuter, ColourValue(1.0f, 1.0f, 0.8f, 0.0f), ColourValue(1.0f, 1.0f, 0.8f, 0.6f));
                     selectedObject->end();
                 }
