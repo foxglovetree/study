@@ -13,7 +13,7 @@ class HexGridApp : public ApplicationContext
 {
 private:
     InputState inputState;
-    CellManager cells{12,10};
+    CellManager cells{12, 10};
 
     CellRender *render;
     CameraUpdater *frameListener;
@@ -52,16 +52,15 @@ public:
         // Create navigation grid and set up example terrain
 
         // Sand: cost 2
-        
 
-        render = new CellRender(sceneMgr, getRenderWindow(),cells);
+        render = new CellRender(sceneMgr, getRenderWindow(), cells);
 
         // Create frame listener for main loop
         frameListener = new CameraUpdater(render, inputState);
         root->addFrameListener(frameListener);
 
         // Add input listener
-        keyHandler = new MainInputListener(inputState, window, cells);
+        keyHandler = new MainInputListener(inputState, window, cells, render->getViewport(), render->getCamera(), render);
         addInputListener(keyHandler);
 
         std::cout << "Starting Ogre visualization... Press ESC to exit.\n";
@@ -71,7 +70,7 @@ public:
         // Find path
         std::cout << "Finding path from (1,1) to (10,8):\n";
         HexGridPrinter::printCostGrid(cells.getCostMap());
-        CostMap& costMap = cells.getCostMap();
+        CostMap &costMap = cells.getCostMap();
         auto path = costMap.findPath(1, 1, 10, 8);
         std::cout << "Path found with " << path.size() << " hexes\n";
         if (!path.empty())

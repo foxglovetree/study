@@ -44,33 +44,27 @@ struct NavNode
     bool operator>(const NavNode &other) const { return f() > other.f(); }
 };
 
-
 class CostMap
 {
 private:
-
-
-// === Fixed hexagon neighbor offsets (flat-top) ===
-int dx_even[6] = {+1, 0, -1, -1, -1, 0};
-int dy_even[6] = {0, -1, -1, 0, +1, +1};
-int dx_odd[6] = {+1, +1, 0, -1, 0, +1};
-int dy_odd[6] = {0, -1, -1, 0, +1, +1};
+    // === Fixed hexagon neighbor offsets (flat-top) ===
+    int dx_even[6] = {+1, 0, -1, -1, -1, 0};
+    int dy_even[6] = {0, -1, -1, 0, +1, +1};
+    int dx_odd[6] = {+1, +1, 0, -1, 0, +1};
+    int dy_odd[6] = {0, -1, -1, 0, +1, +1};
 
 public:
-std::vector<std::vector<int>> costGrid;
-int width, height;
+    std::vector<std::vector<int>> costGrid;
+    int width, height;
 
 public:
     static const int OBSTACLE = 0;
     static const int DEFAULT_COST = 1;
 
-
     CostMap(int w, int h) : width(w), height(h)
     {
         costGrid.resize(height, std::vector<int>(width, DEFAULT_COST));
-        
     }
-
 
     void setCost(int x, int y, int cost)
     {
@@ -203,8 +197,6 @@ private:
     }
 
 public:
-    
-
     float calculatePathCost(const std::vector<Ogre::Vector2> &path) const
     {
         float totalCost = 0;
@@ -222,22 +214,23 @@ public:
     int getWidth() const { return width; }
     int getHeight() const { return height; }
 
-
-    // Get hexagon vertices (for Ogre rendering)
-    std::vector<Ogre::Vector2> getHexagonVertices(int x, int y, float size) const
+    // Get hexagon vertices
+    // anti-clockwise
+    std::vector<Ogre::Vector2> getHexagonVerticesForXZ(int x, int z, float size) const
     {
         std::vector<Ogre::Vector2> vertices(6);
         float centerX = x * size * 1.5f;
-        float centerY = y * size * std::sqrt(3.0f);
-        if (y % 2 == 1)
+        float centerZ = z * size * std::sqrt(3.0f);
+        if (z % 2 == 1)
             centerX += size * 0.75f;
 
         for (int i = 0; i < 6; i++)
         {
-            float angle_rad = (60.0f * i + 30.0f) * 3.1415926f / 180.0f;
+            float angle_rad = (60.0f * i + 30.0f) * Ogre::Math::PI / 180.0f;
             float dx = size * std::cos(angle_rad);
-            float dy = size * std::sin(angle_rad);
-            vertices[i] = Ogre::Vector2(centerX + dx, centerY + dy);
+            float dz = size * std::sin(angle_rad);
+
+            vertices[6 - i - 1] = Ogre::Vector2(centerX + dx, centerZ + dz);
         }
 
         return vertices;

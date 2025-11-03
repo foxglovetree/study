@@ -48,6 +48,7 @@ private:
     std::string materialNameToCreate = "ABC";
     std::string materialNameInUse = "ABC";
     CellManager &cells;
+    Ogre::Viewport *vp;
 
 public:
     CellRender(Ogre::SceneManager *mgr, Ogre::RenderWindow *win, CellManager &cells, float size = 30.0f)
@@ -73,12 +74,12 @@ public:
 
         // Create camera node and set position and direction
         cameraNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
-        cameraNode->setPosition(0, 500, 500);
+        cameraNode->setPosition(0, 500, 0);//
         cameraNode->attachObject(camera);
         cameraNode->lookAt(Ogre::Vector3(0, 0, 0), Ogre::Node::TS_PARENT);
 
         // Create viewport
-        Ogre::Viewport *vp = window->addViewport(camera);
+        vp = window->addViewport(camera);
         vp->setBackgroundColour(Ogre::ColourValue(0.2f, 0.2f, 0.2f));
 
         // Create hexagonal grid object
@@ -116,7 +117,10 @@ public:
         // pass->setVertexColourTracking(TrackVertexColourEnum::TVC_SPECULAR);//镜面反射
         return mat;
     }
-
+    Ogre::Viewport *getViewport()
+    {
+        return vp;
+    }
     Ogre::Camera *getCamera()
     {
         return this->camera;
@@ -167,7 +171,7 @@ private:
                 int cost = costMap.getCost(x, y);
                 Ogre::ColourValue color = getCostColor(cost);
 
-                auto vertices = costMap.getHexagonVertices(x, y, hexSize);
+                auto vertices = costMap.getHexagonVerticesForXZ(x, y, hexSize);
 
                 // Draw hexagon (triangle fan)
                 if (cost == CostMap::OBSTACLE)
@@ -217,7 +221,7 @@ private:
         {
             for (int x = 0; x < width; x++)
             {
-                auto vertices = costMap.getHexagonVertices(x, y, hexSize);
+                auto vertices = costMap.getHexagonVerticesForXZ(x, y, hexSize);
 
                 if (x == startx && y == starty)
                 {
@@ -292,9 +296,50 @@ private:
         // Triangles
         for (int i = 0; i < 6; ++i)
         {
-            int pre = baseIndex + (i + 1) % 6 + 1;
-            int next = baseIndex + i + 1;
-            obj->triangle(baseIndex, pre, next);
+            int p1 = baseIndex + i + 1;
+            int p2 = baseIndex + (i + 1) % 6 + 1;
+            obj->triangle(baseIndex, p1, p2);
         }
+    }
+
+    bool isPointInCell(float px, float py, int cx, int cy)
+    {
+        CostMap &costMap = cells.getCostMap();
+        auto corners = costMap.getHexagonVerticesForXZ(cx, cy, hexSize);
+
+        // 叉积判断是否在所有边的左侧
+        for (int i = 0; i < 6; ++i)
+        {
+            //逆时针
+            auto p1 = corners[i];
+            auto p2 = corners[(i + 1) % 6];
+
+            // 向量 edge = p2 - p1
+            // 向量 point = (mx, my) - p1
+            float cross = (px - p1.x) * (p2.y - p1.y) - (py - p1.y) * (p2.x - p1.x);
+            if (cross < 0)
+                return false;
+        }
+        return true;
+    }
+
+public:
+    bool findCellByPoint(float px, float py, int &cx, int &cy)
+    {
+        int width = cells.getWidth();
+        int height = cells.getHeight();
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                if (isPointInCell(px,py,x,y))
+                {
+                    cx = x;
+                    cy = y;
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 };

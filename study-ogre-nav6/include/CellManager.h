@@ -16,8 +16,8 @@ public:
 class CellManager
 {
 private:
-    static constexpr  CellState DEFAULT_STATE{};
-    
+    static constexpr CellState DEFAULT_STATE{};
+
     std::vector<std::vector<CellState>> cellStates;
     int width;
     int height;
@@ -48,6 +48,7 @@ public:
         costMap.setCost(4, 3, CostMap::OBSTACLE);
         costMap.setCost(7, 5, CostMap::OBSTACLE);
     }
+
 
     CostMap &getCostMap()
     {
