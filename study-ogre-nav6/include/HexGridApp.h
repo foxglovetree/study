@@ -13,7 +13,7 @@ class HexGridApp : public ApplicationContext
 {
 private:
     InputState inputState;
-    CellManager cells{12, 10};
+    CellManager *cells;
 
     CellRender *render;
     CameraUpdater *frameListener;
@@ -22,6 +22,7 @@ private:
 public:
     HexGridApp() : ApplicationContext("HexagonalGridVisualizer")
     {
+        this->cells = new CellManager(12, 10);
     }
     void initApp()
     {
@@ -69,8 +70,8 @@ public:
     {
         // Find path
         std::cout << "Finding path from (1,1) to (10,8):\n";
-        HexGridPrinter::printCostGrid(cells.getCostMap());
-        CostMap &costMap = cells.getCostMap();
+        HexGridPrinter::printCostGrid(cells->getCostMap());
+        CostMap &costMap = cells->getCostMap();
         auto path = costMap.findPath(1, 1, 10, 8);
         std::cout << "Path found with " << path.size() << " hexes\n";
         if (!path.empty())

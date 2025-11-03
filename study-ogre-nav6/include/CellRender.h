@@ -27,6 +27,9 @@
 // === Custom hash function ===
 //
 // === Hexagonal Map Visualizer class ===
+using namespace Ogre;
+using namespace OgreBites;
+
 class CellRender
 {
 private:
@@ -36,8 +39,12 @@ private:
     Ogre::SceneNode *cameraNode;
     Ogre::ManualObject *hexGridObject;
     Ogre::ManualObject *pathObject;
+    Ogre::ManualObject *selectedObject;
+
     Ogre::SceneNode *gridNode;
     Ogre::SceneNode *pathNode;
+    Ogre::SceneNode *selectedNode;
+
     float hexSize;
 
     std::vector<Ogre::Vector2> currentPath;
@@ -47,11 +54,12 @@ private:
 
     std::string materialNameToCreate = "ABC";
     std::string materialNameInUse = "ABC";
-    CellManager &cells;
+    std::string materialNameSelected = "SelectedMaterial";
+    CellManager *cells;
     Ogre::Viewport *vp;
 
 public:
-    CellRender(Ogre::SceneManager *mgr, Ogre::RenderWindow *win, CellManager &cells, float size = 30.0f)
+    CellRender(Ogre::SceneManager *mgr, Ogre::RenderWindow *win, CellManager *cells, float size = 30.0f)
         : sceneMgr(mgr), window(win), hexSize(size),
           cells(cells), startx(-1), starty(-1), endx(-1), endy(-1),
           gridDirty(true), pathDirty(false)
@@ -74,7 +82,7 @@ public:
 
         // Create camera node and set position and direction
         cameraNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
-        cameraNode->setPosition(0, 500, 0);//
+        cameraNode->setPosition(0, 500, 0); //
         cameraNode->attachObject(camera);
         cameraNode->lookAt(Ogre::Vector3(0, 0, 0), Ogre::Node::TS_PARENT);
 
@@ -92,9 +100,42 @@ public:
         pathObject = sceneMgr->createManualObject("PathObject");
         pathNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
         pathNode->attachObject(pathObject);
+        //
+        // Create hexagonal grid object
+        selectedObject = sceneMgr->createManualObject("SelectedCellObject");
+        selectedNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
+        selectedNode->attachObject(selectedObject);
+        //
         createVertexColourMaterial();
+        createVertexColourMaterialForSelected(); // for selected
     }
     // 在你的 HexMapVisualizer 构造函数或初始化函数中调用
+
+    Ogre::MaterialPtr createVertexColourMaterialForSelected()
+    {
+        using namespace Ogre;
+
+        // 创建材质，名称和资源组
+        MaterialPtr mat = MaterialManager::getSingleton().create(materialNameSelected, "General");
+
+        // 禁用阴影接收
+        mat->setReceiveShadows(false);
+        mat->setDepthWriteEnabled(false);
+        mat->setTransparencyCastsShadows(false);
+
+        // 获取默认技术（Ogre 2.x 默认会自动创建一个）
+        Technique *tech = mat->getTechnique(0);
+
+        // 配置 Pass
+        Pass *pass = tech->getPass(0);
+        pass->setVertexColourTracking(TrackVertexColourEnum::TVC_EMISSIVE); // 自发光
+        pass->setSceneBlending(Ogre::SceneBlendType::SBT_TRANSPARENT_ALPHA);
+        pass->setDepthCheckEnabled(true);
+        pass->setLightingEnabled(false);
+        pass->setSelfIllumination(1, 1, 0.8);
+        pass->setDepthBias(0, -1);
+        return mat;
+    }
     Ogre::MaterialPtr createVertexColourMaterial()
     {
         using namespace Ogre;
@@ -142,7 +183,8 @@ public:
         if (gridDirty)
         {
             drawHexGrid();
-            gridDirty = false;
+            drawSelected();
+            // gridDirty = false;
         }
 
         if (pathDirty)
@@ -153,43 +195,53 @@ public:
     }
 
 private:
+
+    void drawSelected()
+    {
+        selectedObject->clear();
+        selectedObject->begin(materialNameSelected, Ogre::RenderOperation::OT_TRIANGLE_LIST);
+        int width = cells->getWidth();
+        int height = cells->getHeight();
+        CostMap &costMap = cells->getCostMap();
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                if (cells->getSelected(x, y))
+                {
+
+                    auto vertices = costMap.getHexagonVerticesForXZ(x, y, hexSize * 0.95);
+                    drawHexagonTo(selectedObject, vertices, ColourValue(1.0f, 1.0f, 0.8f, 0.0f), ColourValue(1.0f, 1.0f, 0.8f, 0.6f));
+                }
+            }
+        }
+
+        selectedObject->end();
+    }
+
     void drawHexGrid()
     {
 
         hexGridObject->clear();
 
-        int width = cells.getWidth();
-        int height = cells.getHeight();
+        int width = cells->getWidth();
+        int height = cells->getHeight();
+        CostMap &costMap = cells->getCostMap();
 
         // Begin the manual object
         hexGridObject->begin(materialNameInUse, Ogre::RenderOperation::OT_TRIANGLE_LIST);
-        CostMap &costMap = cells.getCostMap();
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
             {
                 int cost = costMap.getCost(x, y);
                 Ogre::ColourValue color = getCostColor(cost);
-
                 auto vertices = costMap.getHexagonVerticesForXZ(x, y, hexSize);
-
-                // Draw hexagon (triangle fan)
-                if (cost == CostMap::OBSTACLE)
-                {
-                    // Obstacles in red
-                    drawHexagonTo(hexGridObject, vertices, color);
-                }
-                else
-                {
-                    // Normal terrain with corresponding cost color
-                    drawHexagonTo(hexGridObject, vertices, color);
-                }
+                drawHexagonTo(hexGridObject, vertices, color);
             }
         }
-
         // End the manual object
         hexGridObject->end();
-        std::cout << "End of drawing hex grid" << std::endl;
     }
 
     void drawPath()
@@ -213,9 +265,9 @@ private:
         // Begin the manual object
         pathObject->begin(materialNameInUse, Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
-        int width = cells.getWidth();
-        int height = cells.getHeight();
-        CostMap &costMap = cells.getCostMap();
+        int width = cells->getWidth();
+        int height = cells->getHeight();
+        CostMap &costMap = cells->getCostMap();
 
         for (int y = 0; y < height; y++)
         {
@@ -267,7 +319,13 @@ private:
     // Draw a single hexagon to a specific object
     void drawHexagonTo(Ogre::ManualObject *obj,
                        const std::vector<Ogre::Vector2> &vertices,
-                       const Ogre::ColourValue &color)
+                       const Ogre::ColourValue &color1)
+    {
+        drawHexagonTo(obj, vertices, color1, color1);
+    }
+    void drawHexagonTo(Ogre::ManualObject *obj,
+                       const std::vector<Ogre::Vector2> &vertices,
+                       const Ogre::ColourValue &color1, ColourValue color2)
     {
         const float nomX = 0;
         const float nomY = 1;
@@ -283,14 +341,14 @@ private:
         // Center
         obj->position(center.x, 0, center.y);
         obj->normal(nomX, nomY, nomZ);
-        obj->colour(color * 0.7f);
+        obj->colour(color1);
 
         // Corners
         for (int i = 0; i < 6; ++i)
         {
             obj->position(vertices[i].x, 0, vertices[i].y);
             obj->normal(nomX, nomY, nomZ);
-            obj->colour(color);
+            obj->colour(color2);
         }
 
         // Triangles
@@ -304,13 +362,13 @@ private:
 
     bool isPointInCell(float px, float py, int cx, int cy)
     {
-        CostMap &costMap = cells.getCostMap();
+        CostMap &costMap = cells->getCostMap();
         auto corners = costMap.getHexagonVerticesForXZ(cx, cy, hexSize);
 
         // 叉积判断是否在所有边的左侧
         for (int i = 0; i < 6; ++i)
         {
-            //逆时针
+            // 逆时针
             auto p1 = corners[i];
             auto p2 = corners[(i + 1) % 6];
 
@@ -326,13 +384,13 @@ private:
 public:
     bool findCellByPoint(float px, float py, int &cx, int &cy)
     {
-        int width = cells.getWidth();
-        int height = cells.getHeight();
+        int width = cells->getWidth();
+        int height = cells->getHeight();
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
             {
-                if (isPointInCell(px,py,x,y))
+                if (isPointInCell(px, py, x, y))
                 {
                     cx = x;
                     cy = y;

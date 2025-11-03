@@ -39,13 +39,13 @@ class MainInputListener : public OgreBites::InputListener
 private:
     InputState &inputState;
     RenderWindow *window;
-    CellManager &cells;
+    CellManager *cells;
     Viewport *viewport;
     Camera *camera;
     CellRender *cellRender;
 
 public:
-    MainInputListener(InputState &inputState, RenderWindow *window, CellManager &cells, Viewport *viewport, Camera *camera, CellRender *cellRender) : inputState(inputState), window(window), cells(cells), viewport(viewport), camera(camera), cellRender(cellRender) {};
+    MainInputListener(InputState &inputState, RenderWindow *window, CellManager *cells, Viewport *viewport, Camera *camera, CellRender *cellRender) : inputState(inputState), window(window), cells(cells), viewport(viewport), camera(camera), cellRender(cellRender) {};
 
     bool mousePressed(const MouseButtonEvent &evt) override
     {
@@ -75,7 +75,10 @@ public:
             int cx = -1;
             int cy = -1;
             bool hitCell = cellRender->findCellByPoint(pickX, pickZ, cx, cy);
-
+            if (hitCell)
+            {
+                cells->pickupCell(cx, cy);
+            }
             cout << "worldPoint(" << pickX << ",0," << pickZ << "),cellIdx:[" << cx << "," << cy << "]" << endl;
         }
     }

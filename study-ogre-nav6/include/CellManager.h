@@ -9,7 +9,6 @@ struct CellIndex
 
 struct CellState
 {
-public:
     bool selected = false;
 };
 
@@ -49,6 +48,14 @@ public:
         costMap.setCost(7, 5, CostMap::OBSTACLE);
     }
 
+    void pickupCell(int cx, int cy)
+    {
+        cellStates[cy][cx].selected = true;
+    }
+    bool isSelected(int cx, int cy)
+    {
+        return cellStates[cy][cx].selected;
+    }
 
     CostMap &getCostMap()
     {
@@ -66,11 +73,12 @@ public:
 
     void setSelected(int x, int y, bool selected)
     {
-        cellStates[x][y].selected = selected;
+        cellStates[y][x].selected = selected;
     }
 
     bool getSelected(int x, int y)
     {
-        return cellStates[x][y].selected;
+        return cellStates[y][x].selected;
     }
+
 };
