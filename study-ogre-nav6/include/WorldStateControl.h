@@ -7,7 +7,8 @@
 #include "CellStateControl.h"
 #include "InputState.h"
 #include "PathStateControl.h"
-
+#include "CellMarkStateControl.h"
+#include <unordered_map>
 using namespace Ogre;
 
 // root state & control.
@@ -22,7 +23,9 @@ protected:
     CostMapControl *costMapControl;
     Ogre::Root *root;
     CameraStateControl *frameListener;
-    CellFocusStateControl *cellFocusStateControl;
+
+    std::unordered_map<MarkType, CellMarkStateControl *> markStateControls;
+
     PathStateControl *pathStateControl;
 
 public:
@@ -41,7 +44,10 @@ public:
         // Create frame listener for main loop
         frameListener = new CameraStateControl(camera, inputState);
         root->addFrameListener(frameListener);
-        cellFocusStateControl = new CellFocusStateControl(costMap, sceneMgr);
+
+        markStateControls[MarkType::START] = new CellMarkStateControl(costMap, sceneMgr, MarkType::START);
+        markStateControls[MarkType::END] = new CellMarkStateControl(costMap, sceneMgr, MarkType::END);
+
         this->pathStateControl = new PathStateControl(costMap, sceneMgr);
     }
     PathStateControl *getPathStateControl()
@@ -56,8 +62,17 @@ public:
     {
         return costMap;
     }
-    void pickupCell(int cx, int cy)
+    void markCell(int cx, int cy, MarkType mType)
     {
-        cellFocusStateControl->select(cx, cy);
+        bool marked = markStateControls[mType]->mark(cx, cy);
+
+        //todo raise a event.
+        if(!marked){
+            return ;
+        }
+        if (mType == MarkType::START || mType == MarkType::END)
+        {
+            pathStateControl->findPath(cx,cy);
+        }
     }
 };

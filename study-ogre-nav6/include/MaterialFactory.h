@@ -23,8 +23,7 @@
 #include <OgreFrameListener.h>
 #include <OgreRTShaderSystem.h>
 #include <OgreTechnique.h>
-#include "MaterialFactory.h"
-#include "CellFocusStateControl.h"
+#include "CellMarkStateControl.h"
 
 
 // === Custom hash function ===
@@ -42,7 +41,7 @@ private:
         using namespace Ogre;
 
         // 创建材质，名称和资源组
-        MaterialPtr mat = MaterialManager::getSingleton().create(CellFocusStateControl::materialNameSelected, "General");
+        MaterialPtr mat = MaterialManager::getSingleton().create(CellMarkStateControl::materialNameSelected, "General");
 
         // 禁用阴影接收
         mat->setReceiveShadows(false);

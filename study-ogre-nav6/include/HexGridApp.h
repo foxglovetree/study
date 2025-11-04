@@ -101,7 +101,7 @@ public:
         keyHandler = new MainInputListener(wsc, window, vp, camera);
         addInputListener(keyHandler);
 
-        wsc->getPathStateControl()->findPath();
+        
         
     }
 

@@ -27,6 +27,7 @@
 #include <OgreRenderWindow.h>
 #include <iostream>
 #include "WorldStateControl.h"
+#include "CellMark.h"
 
 using namespace OgreBites;
 using namespace Ogre;
@@ -57,12 +58,17 @@ public:
     {
         if (evt.button == ButtonType::BUTTON_LEFT)
         {
-            pickByMouse(evt.x, evt.y);
+            markByMouse(MarkType::START, evt.x, evt.y);
         }
+        if (evt.button == ButtonType::BUTTON_RIGHT)
+        {
+            markByMouse(MarkType::END, evt.x, evt.y);
+        }
+        
         return true;
     }
 
-    void pickByMouse(int mx, int my)
+    void markByMouse(MarkType mType, int mx, int my)
     {
         // normalized (0,1)
         float ndcX = mx / (float)viewport->getActualWidth();
@@ -83,7 +89,7 @@ public:
             bool hitCell = findCellByPoint(pickX, pickZ, cx, cy);
             if (hitCell)
             {
-                wsc->pickupCell(cx, cy);
+                wsc->markCell(cx, cy, mType);
             }
             cout << "worldPoint(" << pickX << ",0," << pickZ << "),cellIdx:[" << cx << "," << cy << "]" << endl;
         }
@@ -155,7 +161,7 @@ public:
         }
         else
         {
-            pickByMouse(x, y);
+            
         }
         return true;
     }

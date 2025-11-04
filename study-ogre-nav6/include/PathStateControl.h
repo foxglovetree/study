@@ -8,7 +8,6 @@
 #include "HexGridPrinter.h"
 using namespace Ogre;
 
-
 class PathStateControl : StateControl
 {
     Ogre::ManualObject *pathObject;
@@ -19,9 +18,10 @@ class PathStateControl : StateControl
     int starty = -1;
     int endx = -1;
     int endy = -1;
-    CostMap* costMap;
+    CostMap *costMap;
+
 public:
-    PathStateControl(CostMap* costMap, Ogre::SceneManager *sceneMgr) :costMap(costMap)
+    PathStateControl(CostMap *costMap, Ogre::SceneManager *sceneMgr) : costMap(costMap)
     {
         // Create path object
         pathObject = sceneMgr->createManualObject("PathObject");
@@ -29,11 +29,11 @@ public:
         pathNode->attachObject(pathObject);
     }
 
-    void findPath()
+    void findPath(int x2, int y2)
     {
         // Find path
 
-        auto path = costMap->findPath(1, 1, 10, 8);
+        auto path = costMap->findPath(1, 1, x2, y2);
         std::cout << "Path found with " << path.size() << " hexes\n";
         if (!path.empty())
         {
@@ -47,8 +47,8 @@ public:
             std::cout << "\n";
         }
         std::cout << "\n";
-        HexGridPrinter::printPathGrid(costMap, 1, 1, 10, 8, path);
-        setPath(path, 1, 1, 10, 8);
+        HexGridPrinter::printPathGrid(costMap, 1, 1, x2, y2, path);
+        setPath(path, 1, 1, x2, y2);
     }
 
     void setPath(const std::vector<Ogre::Vector2> &path, int sx, int sy, int ex, int ey)
