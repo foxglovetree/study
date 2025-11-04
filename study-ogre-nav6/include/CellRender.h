@@ -195,6 +195,8 @@ public:
     }
 
 private:
+    Ogre::Vector2 preRingLastVertex;
+
     void drawHexagonRing(Ogre::ManualObject *obj,
                          const std::vector<Ogre::Vector2> &verticesInner,
                          const std::vector<Ogre::Vector2> &verticesOuter,
@@ -204,41 +206,55 @@ private:
         const float nomX = 0;
         const float nomY = 1;
         const float nomZ = 0;
-
-        for (int i = 0; i < 7; i++)
+        int baseIndex = obj->getCurrentVertexCount();
+        for (int i = 0; i < 6; i++)
         {
-            int idx = i % 6;
-            obj->position(verticesInner[idx].x, 0, verticesInner[idx].y);
+
+            obj->position(verticesInner[i].x, 0, verticesInner[i].y);
             obj->normal(nomX, nomY, nomZ);
             obj->colour(colorInner);
 
-            obj->position(verticesOuter[idx].x, 0, verticesOuter[idx].y);
+            obj->position(verticesOuter[i].x, 0, verticesOuter[i].y);
             obj->normal(nomX, nomY, nomZ);
             obj->colour(colorOuter);
+        }
+
+        // Triangles
+        for (int i = 0; i < 6; ++i)
+        {
+            int p1 = baseIndex + i * 2;
+            int p2 = p1 + 1;
+            int p3 = baseIndex + ((i + 1) % 6) * 2 + 1;
+            int p4 = p3 - 1;
+
+            obj->triangle(p1, p2, p3);
+            obj->triangle(p1, p3, p4);
         }
     }
 
     void drawSelected()
     {
         selectedObject->clear();
+        selectedObject->begin(materialNameSelected, Ogre::RenderOperation::OT_TRIANGLE_LIST);
         int width = cells->getWidth();
         int height = cells->getHeight();
         CostMap &costMap = cells->getCostMap();
+
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
             {
                 if (cells->getSelected(x, y))
                 {
-                    selectedObject->begin(materialNameSelected, Ogre::RenderOperation::OT_TRIANGLE_STRIP);
 
                     auto verticesInner = costMap.getHexagonVerticesForXZ(x, y, hexSize, 0.75f);
                     auto verticesOuter = costMap.getHexagonVerticesForXZ(x, y, hexSize, 0.95f);
+
                     drawHexagonRing(selectedObject, verticesInner, verticesOuter, ColourValue(1.0f, 1.0f, 0.8f, 0.0f), ColourValue(1.0f, 1.0f, 0.8f, 0.6f));
-                    selectedObject->end();
                 }
             }
         }
+        selectedObject->end();
     }
 
     void drawHexGrid()
