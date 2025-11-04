@@ -26,7 +26,7 @@
 #include "InputState.h"
 #include <OgreRenderWindow.h>
 #include <iostream>
-#include "StateControl.h"
+#include "WorldStateControl.h"
 
 using namespace OgreBites;
 using namespace Ogre;
@@ -37,21 +37,21 @@ using namespace std;
 class MainInputListener : public OgreBites::InputListener
 {
 private:
-    InputState &inputState;
     RenderWindow *window;
     Viewport *viewport;
     Camera *camera;
     WorldStateControl *wsc;
-
+    InputState *inputState;
 
 public:
-    MainInputListener(WorldStateControl *wsc, InputState &inputState,
+    MainInputListener(WorldStateControl *wsc,
                       RenderWindow *window, Viewport *viewport,
-                      Camera *camera) : inputState(inputState), window(window),
-                                        viewport(viewport), camera(camera), wsc(wsc) {
-                                            
+                      Camera *camera) : window(window),
+                                        viewport(viewport), camera(camera), wsc(wsc)
+    {
 
-                                        };
+        this->inputState = wsc->getInputState();
+    };
 
     bool mousePressed(const MouseButtonEvent &evt) override
     {
@@ -91,7 +91,7 @@ public:
 
     bool findCellByPoint(float px, float py, int &cx, int &cy)
     {
-        CostMap* costMap = this->wsc->getCostMap();
+        CostMap *costMap = this->wsc->getCostMap();
         int width = costMap->getWidth();
         int height = costMap->getHeight();
         for (int y = 0; y < height; y++)
@@ -144,11 +144,11 @@ public:
         int edgeSize = 10;
         int x = evt.x;
         int y = evt.y;
-        inputState.left = (x <= edgeSize);
-        inputState.right = (x >= width - edgeSize);
-        inputState.front = (y <= edgeSize);
-        inputState.back = (y >= height - edgeSize);
-        if (inputState.isMoving())
+        inputState->left = (x <= edgeSize);
+        inputState->right = (x >= width - edgeSize);
+        inputState->front = (y <= edgeSize);
+        inputState->back = (y >= height - edgeSize);
+        if (inputState->isMoving())
         {
             cout << "(" << x << "," << y << "),(" << width << "," << height << ")" << endl;
             // try pick.
@@ -175,19 +175,19 @@ public:
         }
         if (evt.keysym.sym == OgreBites::SDLK_LEFT)
         {
-            inputState.left = true;
+            inputState->left = true;
         }
         if (evt.keysym.sym == OgreBites::SDLK_RIGHT)
         {
-            inputState.right = true;
+            inputState->right = true;
         }
         if (evt.keysym.sym == OgreBites::SDLK_UP)
         {
-            inputState.front = true;
+            inputState->front = true;
         }
         if (evt.keysym.sym == OgreBites::SDLK_DOWN)
         {
-            inputState.back = true;
+            inputState->back = true;
         }
         return true;
     }
@@ -196,19 +196,19 @@ public:
 
         if (evt.keysym.sym == OgreBites::SDLK_LEFT)
         {
-            inputState.left = false;
+            inputState->left = false;
         }
         if (evt.keysym.sym == OgreBites::SDLK_RIGHT)
         {
-            inputState.right = false;
+            inputState->right = false;
         }
         if (evt.keysym.sym == OgreBites::SDLK_UP)
         {
-            inputState.front = false;
+            inputState->front = false;
         }
         if (evt.keysym.sym == OgreBites::SDLK_DOWN)
         {
-            inputState.back = false;
+            inputState->back = false;
         }
         return true;
     }

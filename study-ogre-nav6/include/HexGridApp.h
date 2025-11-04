@@ -4,17 +4,18 @@
 #include "MaterialFactory.h"
 #include "HexGridPrinter.h"
 #include "InputState.h"
-#include "CameraUpdater.h"
+#include "CameraStateControl.h"
 #include "MainInputListener.h"
+#include "WorldStateControl.h"
 
 using namespace OgreBites;
 using namespace Ogre;
 class HexGridApp : public ApplicationContext
 {
 private:
-    InputState inputState;
+    
 
-    CameraUpdater *frameListener;
+    CameraStateControl *frameListener;
     MainInputListener *keyHandler;
 Ogre::SceneManager *sceneMgr;
     Ogre::RenderWindow *window;
@@ -93,14 +94,11 @@ public:
         MaterialFactory::createMaterials();
 
         // Create world state and controls.
-        wsc = new WorldStateControl(costMap, sceneMgr);
+        wsc = new WorldStateControl(root, costMap, sceneMgr, camera);
 
-        // Create frame listener for main loop
-        frameListener = new CameraUpdater(camera, inputState);
-        root->addFrameListener(frameListener);
 
         // Add input listener
-        keyHandler = new MainInputListener(wsc, inputState, window, vp, camera);
+        keyHandler = new MainInputListener(wsc, window, vp, camera);
         addInputListener(keyHandler);
         
     }

@@ -89,7 +89,6 @@ private:
     }
 
 public:
-    WorldStateControl *wsc;
     static void createMaterials()
     {
         //

@@ -24,24 +24,28 @@
 #include <OgreRTShaderSystem.h>
 #include <OgreTechnique.h>
 #include "CostMap.h"
+
+#include "StateControl.h"
 #include "InputState.h"
 
 // === Custom hash function ===
 
 // === Frame Listener class for main loop ===
-class CameraUpdater : public Ogre::FrameListener
+class CameraStateControl : public Ogre::FrameListener, StateControl
 {
 private:
     bool quit;
 
-    InputState &inputState;
+    InputState *inputState;
     Ogre::Camera *camera;
 
 public:
-    CameraUpdater(Ogre::Camera *camera,
-                  InputState &inputState) : quit(false),
-                                            inputState(inputState),
-                                            camera(camera) {}
+    CameraStateControl(Ogre::Camera *camera,
+                       InputState *inputState) : quit(false),
+                                                 camera(camera)
+    {
+        this->inputState = inputState;
+    }
 
     bool frameStarted(const Ogre::FrameEvent &evt) override
     {
@@ -58,19 +62,19 @@ public:
 
         float speed = 1000.0f;
 
-        if (inputState.front)
+        if (inputState->front)
         {
             node->translate(-back * speed * evt.timeSinceLastFrame);
         }
-        if (inputState.back)
+        if (inputState->back)
         {
             node->translate(back * speed * evt.timeSinceLastFrame);
         }
-        if (inputState.left)
+        if (inputState->left)
         {
             node->translate(-right * speed * evt.timeSinceLastFrame);
         }
-        if (inputState.right)
+        if (inputState->right)
         {
             node->translate(right * speed * evt.timeSinceLastFrame);
         }

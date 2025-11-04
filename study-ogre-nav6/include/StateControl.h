@@ -6,6 +6,7 @@
 #include "CostMap.h"
 using namespace Ogre;
 
+//Base class for model data and control.
 class StateControl
 {
 
@@ -58,6 +59,7 @@ public:
     }
 };
 
+//
 class CellStateControl : StateControl
 {
 public:
@@ -310,43 +312,5 @@ public:
         // Obstacles
         costMap->setCost(4, 3, CostMap::OBSTACLE);
         costMap->setCost(7, 5, CostMap::OBSTACLE);
-    }
-};
-class WorldStateControl : StateControl
-{
-protected:
-    std::vector<std::vector<CellStateControl *>> cells;
-    Ogre::SceneManager *sceneMgr;
-    
-    CostMap *costMap;
-    CostMapControl *costMapControl;
-
-public:
-    WorldStateControl(CostMap *costMap, Ogre::SceneManager *sceneMgr) : costMap(costMap)
-    {
-        this->sceneMgr = sceneMgr;
-        this->costMapControl = new CostMapControl(costMap);
-        int width = costMap->getWidth();
-        int height = costMap->getHeight();
-        cells.resize(costMap->getHeight(), std::vector<CellStateControl *>(costMap->getWidth(), nullptr));
-        for (int i = 0; i < width; i++)
-        {
-            for (int j = 0; j < height; j++)
-            {
-                cells[j][i] = new CellStateControl(costMap, i, j, sceneMgr);
-            }
-        }
-    }
-    CostMap* getCostMap(){
-        return costMap;
-    }
-    void pickupCell(int cx, int cy)
-    {
-        cells[cy][cx]->setSelected(true);
-    }
-
-    bool isSelected(int cx, int cy)
-    {
-        return cells[cy][cx]->getSelected();
     }
 };
