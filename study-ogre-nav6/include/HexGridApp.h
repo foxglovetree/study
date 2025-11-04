@@ -100,6 +100,8 @@ public:
         // Add input listener
         keyHandler = new MainInputListener(wsc, window, vp, camera);
         addInputListener(keyHandler);
+
+        wsc->getPathStateControl()->findPath();
         
     }
 

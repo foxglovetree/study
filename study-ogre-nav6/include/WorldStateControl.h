@@ -6,6 +6,8 @@
 #include "CostMap.h"
 #include "CellStateControl.h"
 #include "InputState.h"
+#include "PathStateControl.h"
+
 using namespace Ogre;
 
 // root state & control.
@@ -21,6 +23,7 @@ protected:
     Ogre::Root *root;
     CameraStateControl *frameListener;
     CellFocusStateControl *cellFocusStateControl;
+    PathStateControl *pathStateControl;
 
 public:
     WorldStateControl(Ogre::Root *root, CostMap *costMap, Ogre::SceneManager *sceneMgr, Camera *camera) : costMap(costMap)
@@ -39,6 +42,11 @@ public:
         frameListener = new CameraStateControl(camera, inputState);
         root->addFrameListener(frameListener);
         cellFocusStateControl = new CellFocusStateControl(costMap, sceneMgr);
+        this->pathStateControl = new PathStateControl(costMap, sceneMgr);
+    }
+    PathStateControl *getPathStateControl()
+    {
+        return this->pathStateControl;
     }
     InputState *getInputState()
     {
