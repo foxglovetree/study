@@ -1,28 +1,37 @@
 #pragma once
 #include <OgreApplicationContext.h>
 #include <OgreLogManager.h>
-#include "GridRender.h"
+#include "MaterialFactory.h"
 #include "HexGridPrinter.h"
 #include "InputState.h"
 #include "CameraUpdater.h"
 #include "MainInputListener.h"
-#include "CellManager.h"
+
 using namespace OgreBites;
 using namespace Ogre;
 class HexGridApp : public ApplicationContext
 {
 private:
     InputState inputState;
-    CellManager *cells;
 
-    GridRender *render;
     CameraUpdater *frameListener;
     MainInputListener *keyHandler;
+Ogre::SceneManager *sceneMgr;
+    Ogre::RenderWindow *window;
+    Ogre::Camera *camera;
+    Ogre::SceneNode *cameraNode;
 
+    Ogre::ManualObject *hexGridObject;
+
+    Ogre::SceneNode *gridNode;
+    Ogre::SceneNode *pathNode;
+
+    Ogre::Viewport *vp;
+    CostMap* costMap;
+    WorldStateControl* wsc;
 public:
     HexGridApp() : ApplicationContext("HexagonalGridVisualizer")
     {
-        this->cells = new CellManager(12, 10);
     }
     void initApp()
     {
@@ -53,43 +62,52 @@ public:
         // Create navigation grid and set up example terrain
 
         // Sand: cost 2
+        CostMap *costMap = new CostMap(12, 10);
+        
+        // 假设你已经有 sceneMgr 和 camera
+        Ogre::Light *light = sceneMgr->createLight("MyPointLight");
+        light->setType(Ogre::Light::LT_POINT);
+        light->setDiffuseColour(Ogre::ColourValue(1.0, 1.0, 1.0));  // 白色漫反射
+        light->setSpecularColour(Ogre::ColourValue(1.0, 1.0, 1.0)); // 白色镜面光
 
-        render = new GridRender(sceneMgr, getRenderWindow(), cells);
+        Ogre::SceneNode *lightNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
+        lightNode->setPosition(0, 500, 0);
+        lightNode->attachObject(light);
+        // Create camera
+        camera = sceneMgr->createCamera("HexMapCamera");
+        camera->setNearClipDistance(0.1f);
+        camera->setFarClipDistance(1000.0f);
+        camera->setAutoAspectRatio(true);
+
+        // Create camera node and set position and direction
+        cameraNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
+        cameraNode->setPosition(0, 500, 500); //
+        cameraNode->attachObject(camera);
+        cameraNode->lookAt(Ogre::Vector3(0, 0, 0), Ogre::Node::TS_PARENT);
+
+        // Create viewport
+        vp = window->addViewport(camera);
+        vp->setBackgroundColour(Ogre::ColourValue(0.2f, 0.2f, 0.2f));
+
+        // Create materials before buding mesh.   
+        MaterialFactory::createMaterials();
+
+        // Create world state and controls.
+        wsc = new WorldStateControl(costMap, sceneMgr);
 
         // Create frame listener for main loop
-        frameListener = new CameraUpdater(render, inputState);
+        frameListener = new CameraUpdater(camera, inputState);
         root->addFrameListener(frameListener);
 
         // Add input listener
-        keyHandler = new MainInputListener(render->wsc, inputState, window, cells, render->getViewport(), render->getCamera(), render);
+        keyHandler = new MainInputListener(wsc, inputState, window, vp, camera);
         addInputListener(keyHandler);
-
-        std::cout << "Starting Ogre visualization... Press ESC to exit.\n";
+        
     }
+
     void findPath()
     {
-        // Find path
-        std::cout << "Finding path from (1,1) to (10,8):\n";
-        HexGridPrinter::printCostGrid(cells->getCostMap());
-        CostMap &costMap = cells->getCostMap();
-        auto path = costMap.findPath(1, 1, 10, 8);
-        std::cout << "Path found with " << path.size() << " hexes\n";
-        if (!path.empty())
-        {
-            float totalCost = costMap.calculatePathCost(path);
-            std::cout << "Total path cost: " << totalCost << "\n";
-            std::cout << "Path: ";
-            for (const auto &p : path)
-            {
-                std::cout << "(" << (int)p.x << "," << (int)p.y << ") ";
-            }
-            std::cout << "\n";
-        }
-        std::cout << "\n";
-        HexGridPrinter::printPathGrid(costMap, 1, 1, 10, 8, path);
-        render->setPath(path, 1, 1, 10, 8);
     }
-
     void startRendering()
     {
         mRoot->startRendering();

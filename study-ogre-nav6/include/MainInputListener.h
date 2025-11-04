@@ -26,7 +26,6 @@
 #include "InputState.h"
 #include <OgreRenderWindow.h>
 #include <iostream>
-#include "CellManager.h"
 #include "StateControl.h"
 
 using namespace OgreBites;
@@ -40,13 +39,19 @@ class MainInputListener : public OgreBites::InputListener
 private:
     InputState &inputState;
     RenderWindow *window;
-    CellManager *cells;
     Viewport *viewport;
     Camera *camera;
-    GridRender *cellRender;
-    WorldStateControl * wsc;
+    WorldStateControl *wsc;
+
+
 public:
-    MainInputListener(WorldStateControl * wsc, InputState &inputState, RenderWindow *window, CellManager *cells, Viewport *viewport, Camera *camera, GridRender *cellRender) : inputState(inputState), window(window), cells(cells), viewport(viewport), camera(camera), cellRender(cellRender) ,wsc(wsc){};
+    MainInputListener(WorldStateControl *wsc, InputState &inputState,
+                      RenderWindow *window, Viewport *viewport,
+                      Camera *camera) : inputState(inputState), window(window),
+                                        viewport(viewport), camera(camera), wsc(wsc) {
+                                            
+
+                                        };
 
     bool mousePressed(const MouseButtonEvent &evt) override
     {
@@ -75,13 +80,52 @@ public:
             float pickZ = worldPt.z; // 因为我们把“y”方向当成了水平面内的 y
             int cx = -1;
             int cy = -1;
-            bool hitCell = cellRender->findCellByPoint(pickX, pickZ, cx, cy);
+            bool hitCell = findCellByPoint(pickX, pickZ, cx, cy);
             if (hitCell)
             {
                 wsc->pickupCell(cx, cy);
             }
             cout << "worldPoint(" << pickX << ",0," << pickZ << "),cellIdx:[" << cx << "," << cy << "]" << endl;
         }
+    }
+
+    bool findCellByPoint(float px, float py, int &cx, int &cy)
+    {
+        CostMap* costMap = this->wsc->getCostMap();
+        int width = costMap->getWidth();
+        int height = costMap->getHeight();
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                if (isPointInCell(px, py, x, y))
+                {
+                    cx = x;
+                    cy = y;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    bool isPointInCell(float px, float py, int cx, int cy)
+    {
+        auto corners = CostMap::calculateVerticesForXZ(cx, cy, CostMap::hexSize);
+
+        // 叉积判断是否在所有边的左侧
+        for (int i = 0; i < 6; ++i)
+        {
+            // 逆时针
+            auto p1 = corners[i];
+            auto p2 = corners[(i + 1) % 6];
+
+            // 向量 edge = p2 - p1
+            // 向量 point = (mx, my) - p1
+            float cross = (px - p1.x) * (p2.y - p1.y) - (py - p1.y) * (p2.x - p1.x);
+            if (cross < 0)
+                return false;
+        }
+        return true;
     }
 
     bool mouseReleased(const MouseButtonEvent &evt) override

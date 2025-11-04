@@ -32,20 +32,22 @@
 class CameraUpdater : public Ogre::FrameListener
 {
 private:
-    GridRender *render;
     bool quit;
 
     InputState &inputState;
+    Ogre::Camera *camera;
 
 public:
-    CameraUpdater(GridRender *viz, InputState &inputState) : render(viz), quit(false), inputState(inputState) {}
+    CameraUpdater(Ogre::Camera *camera,
+                  InputState &inputState) : quit(false),
+                                            inputState(inputState),
+                                            camera(camera) {}
 
     bool frameStarted(const Ogre::FrameEvent &evt) override
     {
         // std::cout << "Frame started!\n";
 
         // Move camera
-        Ogre::Camera *camera = render->getCamera();
         Ogre::SceneNode *node = camera->getParentSceneNode();
         // 获取当前朝向（四元数）
         // Ogre::Quaternion orientation = node->getOrientation();
@@ -71,13 +73,6 @@ public:
         if (inputState.right)
         {
             node->translate(right * speed * evt.timeSinceLastFrame);
-        }
-       
-
-        // Update visualization
-        if (render)
-        {
-            render->update();
         }
 
         return true; // Continue rendering

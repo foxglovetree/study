@@ -26,7 +26,7 @@ void HexGridPrinter::printCostGrid(CostMap &grid)
 }
 
 // === Print path result grid ===
-void HexGridPrinter::printPathGrid(CostMap &grid, int startx , int starty , int endx , int endy ,
+void HexGridPrinter::printPathGrid(CostMap *grid, int startx , int starty , int endx , int endy ,
                                    const std::vector<Ogre::Vector2> &path)
 {
     std::cout << "Path Result (S=start, E=end, *=path, number=cost):\n";
@@ -37,14 +37,14 @@ void HexGridPrinter::printPathGrid(CostMap &grid, int startx , int starty , int 
         pathSet.insert({static_cast<int>(p.x), static_cast<int>(p.y)});
     }
 
-    for (int y = 0; y < grid.height; y++)
+    for (int y = 0; y < grid->height; y++)
     {
         if (y % 2 == 1)
             std::cout << " ";
-        for (int x = 0; x < grid.width; x++)
+        for (int x = 0; x < grid->width; x++)
         {
             char c = '.';
-            int cost = grid.costGrid[y][x];
+            int cost = grid->costGrid[y][x];
 
             if (x == startx && y == starty)
             {
