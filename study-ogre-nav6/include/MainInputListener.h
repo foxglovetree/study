@@ -27,6 +27,7 @@
 #include <OgreRenderWindow.h>
 #include <iostream>
 #include "CellManager.h"
+#include "StateControl.h"
 
 using namespace OgreBites;
 using namespace Ogre;
@@ -42,10 +43,10 @@ private:
     CellManager *cells;
     Viewport *viewport;
     Camera *camera;
-    CellRender *cellRender;
-
+    GridRender *cellRender;
+    WorldStateControl * wsc;
 public:
-    MainInputListener(InputState &inputState, RenderWindow *window, CellManager *cells, Viewport *viewport, Camera *camera, CellRender *cellRender) : inputState(inputState), window(window), cells(cells), viewport(viewport), camera(camera), cellRender(cellRender) {};
+    MainInputListener(WorldStateControl * wsc, InputState &inputState, RenderWindow *window, CellManager *cells, Viewport *viewport, Camera *camera, GridRender *cellRender) : inputState(inputState), window(window), cells(cells), viewport(viewport), camera(camera), cellRender(cellRender) ,wsc(wsc){};
 
     bool mousePressed(const MouseButtonEvent &evt) override
     {
@@ -77,7 +78,7 @@ public:
             bool hitCell = cellRender->findCellByPoint(pickX, pickZ, cx, cy);
             if (hitCell)
             {
-                cells->pickupCell(cx, cy);
+                wsc->pickupCell(cx, cy);
             }
             cout << "worldPoint(" << pickX << ",0," << pickZ << "),cellIdx:[" << cx << "," << cy << "]" << endl;
         }

@@ -24,26 +24,28 @@
 #include <OgreRTShaderSystem.h>
 #include <OgreTechnique.h>
 #include "CellManager.h"
+#include "GridRender.h"
+#include "StateControl.h"
+
 // === Custom hash function ===
 //
 // === Hexagonal Map Visualizer class ===
 using namespace Ogre;
 using namespace OgreBites;
 
-class CellRender
+class GridRender
 {
 private:
     Ogre::SceneManager *sceneMgr;
     Ogre::RenderWindow *window;
     Ogre::Camera *camera;
     Ogre::SceneNode *cameraNode;
+
     Ogre::ManualObject *hexGridObject;
     Ogre::ManualObject *pathObject;
-    Ogre::ManualObject *selectedObject;
 
     Ogre::SceneNode *gridNode;
     Ogre::SceneNode *pathNode;
-    Ogre::SceneNode *selectedNode;
 
     float hexSize;
 
@@ -54,13 +56,13 @@ private:
 
     std::string materialNameToCreate = "ABC";
     std::string materialNameInUse = "ABC";
-    std::string materialNameSelected = "SelectedMaterial";
     CellManager *cells;
     Ogre::Viewport *vp;
 
 public:
-    CellRender(Ogre::SceneManager *mgr, Ogre::RenderWindow *win, CellManager *cells, float size = 30.0f)
-        : sceneMgr(mgr), window(win), hexSize(size),
+    WorldStateControl *wsc;
+    GridRender(Ogre::SceneManager *mgr, Ogre::RenderWindow *win, CellManager *cells)
+        : sceneMgr(mgr), window(win), hexSize(CostMap::hexSize),
           cells(cells), startx(-1), starty(-1), endx(-1), endy(-1),
           gridDirty(true), pathDirty(false)
     {
@@ -100,11 +102,11 @@ public:
         pathObject = sceneMgr->createManualObject("PathObject");
         pathNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
         pathNode->attachObject(pathObject);
+
+        wsc = new WorldStateControl(sceneMgr, cells->getWidth(), cells->getHeight());
         //
         // Create hexagonal grid object
-        selectedObject = sceneMgr->createManualObject("SelectedCellObject");
-        selectedNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
-        selectedNode->attachObject(selectedObject);
+        
         //
         createVertexColourMaterial();
         createVertexColourMaterialForSelected(); // for selected
@@ -183,7 +185,6 @@ public:
         if (gridDirty)
         {
             drawHexGrid();
-            drawSelected();
             // gridDirty = false;
         }
 
@@ -232,31 +233,7 @@ private:
         }
     }
 
-    void drawSelected()
-    {
-        selectedObject->clear();
-        selectedObject->begin(materialNameSelected, Ogre::RenderOperation::OT_TRIANGLE_LIST);
-        int width = cells->getWidth();
-        int height = cells->getHeight();
-        CostMap &costMap = cells->getCostMap();
-
-        for (int y = 0; y < height; y++)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                if (cells->getSelected(x, y))
-                {
-
-                    auto verticesInner = costMap.getHexagonVerticesForXZ(x, y, hexSize, 0.75f);
-                    auto verticesOuter = costMap.getHexagonVerticesForXZ(x, y, hexSize, 0.95f);
-
-                    drawHexagonRing(selectedObject, verticesInner, verticesOuter, ColourValue(1.0f, 1.0f, 0.8f, 0.0f), ColourValue(1.0f, 1.0f, 0.8f, 0.6f));
-                }
-            }
-        }
-        selectedObject->end();
-    }
-
+    
     void drawHexGrid()
     {
 
@@ -274,7 +251,7 @@ private:
             {
                 int cost = costMap.getCost(x, y);
                 Ogre::ColourValue color = getCostColor(cost);
-                auto vertices = costMap.getHexagonVerticesForXZ(x, y, hexSize);
+                auto vertices = costMap.calculateVerticesForXZ(x, y, hexSize);
                 drawHexagonTo(hexGridObject, vertices, color);
             }
         }
@@ -311,7 +288,7 @@ private:
         {
             for (int x = 0; x < width; x++)
             {
-                auto vertices = costMap.getHexagonVerticesForXZ(x, y, hexSize);
+                auto vertices = costMap.calculateVerticesForXZ(x, y, hexSize);
 
                 if (x == startx && y == starty)
                 {
@@ -402,7 +379,7 @@ private:
     bool isPointInCell(float px, float py, int cx, int cy)
     {
         CostMap &costMap = cells->getCostMap();
-        auto corners = costMap.getHexagonVerticesForXZ(cx, cy, hexSize);
+        auto corners = costMap.calculateVerticesForXZ(cx, cy, hexSize);
 
         // 叉积判断是否在所有边的左侧
         for (int i = 0; i < 6; ++i)

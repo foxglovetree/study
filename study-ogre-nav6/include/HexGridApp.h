@@ -1,7 +1,7 @@
 #pragma once
 #include <OgreApplicationContext.h>
 #include <OgreLogManager.h>
-#include "CellRender.h"
+#include "GridRender.h"
 #include "HexGridPrinter.h"
 #include "InputState.h"
 #include "CameraUpdater.h"
@@ -15,7 +15,7 @@ private:
     InputState inputState;
     CellManager *cells;
 
-    CellRender *render;
+    GridRender *render;
     CameraUpdater *frameListener;
     MainInputListener *keyHandler;
 
@@ -54,14 +54,14 @@ public:
 
         // Sand: cost 2
 
-        render = new CellRender(sceneMgr, getRenderWindow(), cells);
+        render = new GridRender(sceneMgr, getRenderWindow(), cells);
 
         // Create frame listener for main loop
         frameListener = new CameraUpdater(render, inputState);
         root->addFrameListener(frameListener);
 
         // Add input listener
-        keyHandler = new MainInputListener(inputState, window, cells, render->getViewport(), render->getCamera(), render);
+        keyHandler = new MainInputListener(render->wsc, inputState, window, cells, render->getViewport(), render->getCamera(), render);
         addInputListener(keyHandler);
 
         std::cout << "Starting Ogre visualization... Press ESC to exit.\n";

@@ -1,31 +1,18 @@
 #pragma once
 #include <vector>
 #include "CostMap.h"
-struct CellIndex
-{
-    int x;
-    int y;
-};
-
-struct CellState
-{
-    bool selected = false;
-};
 
 class CellManager
 {
 private:
-    static constexpr CellState DEFAULT_STATE{};
-
-    std::vector<std::vector<CellState>> cellStates;
+    
     int width;
     int height;
     CostMap costMap;
 
 public:
     CellManager(int width, int height) : width(width), height(height), costMap(width, height)
-    {
-        cellStates.resize(height, std::vector<CellState>(width, DEFAULT_STATE));
+    {        
         for (int i = 3; i < 8; i++)
         {
             costMap.setCost(i, 4, 2);
@@ -48,14 +35,6 @@ public:
         costMap.setCost(7, 5, CostMap::OBSTACLE);
     }
 
-    void pickupCell(int cx, int cy)
-    {
-        cellStates[cy][cx].selected = true;
-    }
-    bool isSelected(int cx, int cy)
-    {
-        return cellStates[cy][cx].selected;
-    }
 
     CostMap &getCostMap()
     {
@@ -69,16 +48,6 @@ public:
     int getHeight()
     {
         return height;
-    }
-
-    void setSelected(int x, int y, bool selected)
-    {
-        cellStates[y][x].selected = selected;
-    }
-
-    bool getSelected(int x, int y)
-    {
-        return cellStates[y][x].selected;
     }
 
 };

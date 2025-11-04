@@ -24,7 +24,6 @@
 #include <OgreRTShaderSystem.h>
 #include <OgreTechnique.h>
 #include "CostMap.h"
-#include "CellRender.h"
 #include "InputState.h"
 
 // === Custom hash function ===
@@ -33,13 +32,13 @@
 class CameraUpdater : public Ogre::FrameListener
 {
 private:
-    CellRender *render;
+    GridRender *render;
     bool quit;
 
     InputState &inputState;
 
 public:
-    CameraUpdater(CellRender *viz, InputState &inputState) : render(viz), quit(false), inputState(inputState) {}
+    CameraUpdater(GridRender *viz, InputState &inputState) : render(viz), quit(false), inputState(inputState) {}
 
     bool frameStarted(const Ogre::FrameEvent &evt) override
     {

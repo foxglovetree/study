@@ -46,6 +46,9 @@ struct NavNode
 
 class CostMap
 {
+public:
+    static constexpr float hexSize = 30.0f;
+
 private:
     // === Fixed hexagon neighbor offsets (flat-top) ===
     int dx_even[6] = {+1, 0, -1, -1, -1, 0};
@@ -216,7 +219,7 @@ public:
 
     // Get hexagon vertices
     // anti-clockwise
-    std::vector<Ogre::Vector2> getHexagonVerticesForXZ(int x, int z, float rad, float scale = 1.0f) const
+    static std::vector<Ogre::Vector2> calculateVerticesForXZ(int x, int z, float rad, float scale = 1.0f)
     {
         std::vector<Ogre::Vector2> vertices(6);
         float centerX = x * 2 * rad + (z % 2 == 0 ? 0 : rad);
