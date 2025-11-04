@@ -219,11 +219,16 @@ public:
 
     // Get hexagon vertices
     // anti-clockwise
+    static std::vector<Ogre::Vector2> calculateVerticesForXZ(float rad, float scale = 1.0f)
+    {
+        return calculateVerticesForXZ(0, 0, rad, scale);
+    }
+
     static std::vector<Ogre::Vector2> calculateVerticesForXZ(int x, int z, float rad, float scale = 1.0f)
     {
         std::vector<Ogre::Vector2> vertices(6);
-        float centerX = x * 2 * rad + (z % 2 == 0 ? 0 : rad);
-        float centerZ = z * rad * std::sqrt(3.0f);
+
+        Ogre::Vector3 center = calculateCenterForXZ(x, z, rad);
 
         float RAD = scale * 2 * rad / std::sqrt(3.0f);
 
@@ -233,9 +238,17 @@ public:
             float dx = RAD * std::cos(angle_rad);
             float dz = RAD * std::sin(angle_rad);
 
-            vertices[6 - i - 1] = Ogre::Vector2(centerX + dx, centerZ + dz);
+            vertices[6 - i - 1] = Ogre::Vector2(center.x + dx, center.z + dz);
         }
 
         return vertices;
+    
+    }
+    
+    static Ogre::Vector3 calculateCenterForXZ(int x, int z, float rad = CostMap::hexSize)
+    {
+        float centerX = x * 2 * rad + (z % 2 == 0 ? 0 : rad);
+        float centerZ = z * rad * std::sqrt(3.0f);
+        return Ogre::Vector3(centerX, 0, centerZ);
     }
 };
