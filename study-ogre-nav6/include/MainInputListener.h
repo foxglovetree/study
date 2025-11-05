@@ -28,6 +28,7 @@
 #include <iostream>
 #include "WorldStateControl.h"
 #include "CellMark.h"
+#include "CellUtil.h"
 
 using namespace OgreBites;
 using namespace Ogre;
@@ -40,7 +41,7 @@ class MainInputListener : public OgreBites::InputListener
 private:
     RenderWindow *window;
     Viewport *viewport;
-    Camera *camera;
+    Camera *camera;    
     WorldStateControl *wsc;
     InputState *inputState;
 
@@ -54,21 +55,34 @@ public:
         this->inputState = wsc->getInputState();
     };
 
+    void pickByMouse(int mx, int my)
+    {   
+        // normalized (0,1)
+        float ndcX = mx / (float)viewport->getActualWidth();
+        float ndcY = my / (float)viewport->getActualHeight();
+        Ogre::Ray ray = camera->getCameraToViewportRay(ndcX, ndcY);
+        
+        wsc->pickActorByRay(ray);
+    }
+
     bool mousePressed(const MouseButtonEvent &evt) override
     {
         if (evt.button == ButtonType::BUTTON_LEFT)
         {
-            markByMouse(MarkType::START, evt.x, evt.y);
+            pickByMouse(evt.x, evt.y);
+            //markByMouse(MarkType::START, evt.x, evt.y);
         }
         if (evt.button == ButtonType::BUTTON_RIGHT)
         {
-            markByMouse(MarkType::END, evt.x, evt.y);
+
+            markByMouse(evt.x, evt.y);    
+                    
         }
-        
+
         return true;
     }
 
-    void markByMouse(MarkType mType, int mx, int my)
+    void markByMouse(int mx, int my)
     {
         // normalized (0,1)
         float ndcX = mx / (float)viewport->getActualWidth();
@@ -81,58 +95,23 @@ public:
         cout << "ndc:(" << ndcX << "," << ndcY << ")" << "hit:" << hitGrd.first << endl;
         if (hitGrd.first)
         {
-            Ogre::Vector3 worldPt = ray.getPoint(hitGrd.second);
-            float pickX = worldPt.x;
-            float pickZ = worldPt.z; // 因为我们把“y”方向当成了水平面内的 y
+            Ogre::Vector3 pos = ray.getPoint(hitGrd.second);
+            
             int cx = -1;
             int cy = -1;
-            bool hitCell = findCellByPoint(pickX, pickZ, cx, cy);
+            CostMap *costMap = this->wsc->getCostMap();
+            bool hitCell = CellUtil::findCellByPoint(costMap, pos.x, pos.z, cx, cy);
             if (hitCell)
             {
-                wsc->markCell(cx, cy, mType);
+                //
+                wsc->markCell(cx, cy, MarkType::END);
+                //
+
             }
-            cout << "worldPoint(" << pickX << ",0," << pickZ << "),cellIdx:[" << cx << "," << cy << "]" << endl;
+            //cout << "worldPoint(" << pickX << ",0," << pickZ << "),cellIdx:[" << cx << "," << cy << "]" << endl;
         }
     }
 
-    bool findCellByPoint(float px, float py, int &cx, int &cy)
-    {
-        CostMap *costMap = this->wsc->getCostMap();
-        int width = costMap->getWidth();
-        int height = costMap->getHeight();
-        for (int y = 0; y < height; y++)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                if (isPointInCell(px, py, x, y))
-                {
-                    cx = x;
-                    cy = y;
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-    bool isPointInCell(float px, float py, int cx, int cy)
-    {
-        auto corners = CostMap::calculateVerticesForXZ(cx, cy, CostMap::hexSize);
-
-        // 叉积判断是否在所有边的左侧
-        for (int i = 0; i < 6; ++i)
-        {
-            // 逆时针
-            auto p1 = corners[i];
-            auto p2 = corners[(i + 1) % 6];
-
-            // 向量 edge = p2 - p1
-            // 向量 point = (mx, my) - p1
-            float cross = (px - p1.x) * (p2.y - p1.y) - (py - p1.y) * (p2.x - p1.x);
-            if (cross < 0)
-                return false;
-        }
-        return true;
-    }
 
     bool mouseReleased(const MouseButtonEvent &evt) override
     {
@@ -161,7 +140,6 @@ public:
         }
         else
         {
-            
         }
         return true;
     }
