@@ -28,8 +28,9 @@
 #include "StateControl.h"
 #include "InputState.h"
 #include "CameraUtil.h"
+#include "Polygon2.h"
 
-// === Custom hash function ===
+using namespace Ogre;
 
 // === Frame Listener class for main loop ===
 class CameraStateControl : public Ogre::FrameListener, StateControl
@@ -40,26 +41,36 @@ private:
     InputState *inputState;
     Ogre::Camera *camera;
     ViewPoint *viewport;
+    CostMap *costMap;
 
 public:
-    CameraStateControl(Ogre::Camera *camera, ViewPoint *viewport,
-                       InputState *inputState) : quit(false),
+    CameraStateControl(CostMap *costMap, Ogre::Camera *camera,
+                       InputState *inputState) : quit(false), costMap(costMap), inputState(inputState),
                                                  camera(camera), viewport(viewport)
     {
-        this->inputState = inputState;
     }
 
-    void calculateBorder()
+    bool checkViewportInBorderOfGround()
     {
+
+        // todo cache border on ground
+        int width = costMap->getWidth();
+        int height = costMap->getHeight();
+        float rX = width * CostMap::hexSize * 2;
+        float rZ = height * CostMap::hexSize * 2;
+        Polygon2 borderOnGround(Vector2(0, 0), Vector2(0, rZ), Vector2(rX, rZ), Vector2(rX, 0));
+        //
+
         Ogre::Plane ground(Ogre::Vector3::UNIT_Y, 0);
-        std::vector<Ogre::Vector3> points;
-        if(CameraUtil::getViewportOnPlane(ground,this->camera,points)){
-            
+        Ray ray = camera->getCameraToViewportRay(0.5f, 0.5f);
+        auto hitGrd = ray.intersects(ground);
+        if (!hitGrd.first)
+        {
+            return false;
         }
-
+        Vector3 viewCenterOnGround = ray.getPoint(hitGrd.second);
+        return borderOnGround.isPointInPolygon(viewCenterOnGround.x, viewCenterOnGround.z);
     }
-
-    
 
     bool frameStarted(const Ogre::FrameEvent &evt) override
     {
@@ -75,7 +86,7 @@ public:
         Ogre::Vector3 back = Ogre::Vector3::UNIT_Z;
 
         float speed = 1000.0f;
-
+        Vector3 position = node->getPosition();
         if (inputState->front)
         {
             node->translate(-back * speed * evt.timeSinceLastFrame);
@@ -91,6 +102,12 @@ public:
         if (inputState->right)
         {
             node->translate(right * speed * evt.timeSinceLastFrame);
+        }
+
+        if (!checkViewportInBorderOfGround())
+        {
+            // move back.
+            node->setPosition(position);
         }
 
         return true; // Continue rendering

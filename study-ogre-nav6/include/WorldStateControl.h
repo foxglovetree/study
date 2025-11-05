@@ -42,7 +42,7 @@ public:
         cells = new CellStateControl(costMap, sceneMgr);
 
         // Create frame listener for main loop
-        frameListener = new CameraStateControl(camera, inputState);
+        frameListener = new CameraStateControl(costMap, camera, inputState);
         root->addFrameListener(frameListener);
 
         markStateControls[MarkType::START] = new CellMarkStateControl(costMap, sceneMgr, MarkType::START);

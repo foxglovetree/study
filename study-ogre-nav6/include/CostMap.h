@@ -47,7 +47,7 @@ struct NavNode
 class CostMap
 {
 public:
-    static constexpr float hexSize = 30.0f;
+    static constexpr float hexSize = 30.0f;//inner radius
 
 private:
     // === Fixed hexagon neighbor offsets (flat-top) ===
