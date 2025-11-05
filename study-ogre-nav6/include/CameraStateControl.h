@@ -27,6 +27,7 @@
 
 #include "StateControl.h"
 #include "InputState.h"
+#include "CameraUtil.h"
 
 // === Custom hash function ===
 
@@ -38,14 +39,27 @@ private:
 
     InputState *inputState;
     Ogre::Camera *camera;
+    ViewPoint *viewport;
 
 public:
-    CameraStateControl(Ogre::Camera *camera,
+    CameraStateControl(Ogre::Camera *camera, ViewPoint *viewport,
                        InputState *inputState) : quit(false),
-                                                 camera(camera)
+                                                 camera(camera), viewport(viewport)
     {
         this->inputState = inputState;
     }
+
+    void calculateBorder()
+    {
+        Ogre::Plane ground(Ogre::Vector3::UNIT_Y, 0);
+        std::vector<Ogre::Vector3> points;
+        if(CameraUtil::getViewportOnPlane(ground,this->camera,points)){
+            
+        }
+
+    }
+
+    
 
     bool frameStarted(const Ogre::FrameEvent &evt) override
     {

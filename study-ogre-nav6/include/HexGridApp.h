@@ -105,9 +105,6 @@ public:
         
     }
 
-    void findPath()
-    {
-    }
     void startRendering()
     {
         mRoot->startRendering();
