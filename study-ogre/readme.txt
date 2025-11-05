@@ -75,3 +75,5 @@
 ..resources.cfg(same as plugins.cfg)
 
 .TroubleShooting:
+.Other
+powershell.exe -WindowStyle Hidden -Command "&{Import-Module """C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"""; Enter-VsDevShell 086e2407 -SkipAutomaticLocation -DevCmdArguments """-arch=x64 -host_arch=x64"""; D:\soft\VSCode-win32-x64-1.105.1\Code.exe}"
