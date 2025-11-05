@@ -11,17 +11,17 @@ class CellStateControl : StateControl
 {
 public:
 private:
-    Ogre::ManualObject *hexGridObject;
-    Ogre::SceneNode *gridNode;
+    Ogre::ManualObject *obj;
+    Ogre::SceneNode *node;
     CostMap *costMap;
 
 public:
     CellStateControl(CostMap *costMap, Ogre::SceneManager *sceneMgr) : costMap(costMap)
     {
         // Create hexagonal grid object
-        hexGridObject = sceneMgr->createManualObject();
-        gridNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
-        gridNode->attachObject(hexGridObject);
+        obj = sceneMgr->createManualObject();
+        node = sceneMgr->getRootSceneNode()->createChildSceneNode();
+        node->attachObject(obj);
         //
         buildCellMesh();
     }
@@ -29,10 +29,10 @@ public:
     void buildCellMesh()
     {
 
-        hexGridObject->clear();
+        obj->clear();
 
         // Begin the manual object
-        hexGridObject->begin(StateControl::materialNameInUse, Ogre::RenderOperation::OT_TRIANGLE_LIST);
+        obj->begin(StateControl::materialNameInUse, Ogre::RenderOperation::OT_TRIANGLE_LIST);
         int width = costMap->getWidth();
         int height = costMap->getHeight();
         for (int x = 0; x < width; x++)
@@ -42,12 +42,12 @@ public:
                 int cost = costMap->getCost(x, y);
                 Ogre::ColourValue color = getCostColor(cost);
                 auto vertices = CostMap::calculateVerticesForXZ(x, y, CostMap::hexSize);
-                StateControl::drawHexagonTo(hexGridObject, vertices, color);
+                StateControl::drawHexagonTo(obj, vertices, color);
             }
         }
 
         // End the manual object
-        hexGridObject->end();
+        obj->end();
     }
 
     // Get color based on cost

@@ -6,7 +6,7 @@
 #include "CostMap.h"
 using namespace Ogre;
 
-//Base class for model data and control.
+// Base class for model data and control.
 class StateControl
 {
 
@@ -59,6 +59,32 @@ public:
     }
 };
 
+class SimpleStateControl : StateControl
+{
+protected:
+    ManualObject *obj;
+    SceneNode *node;
+
+public:
+    SimpleStateControl(Ogre::SceneManager *sceneMgr)
+    {
+        obj = sceneMgr->createManualObject();
+        node = sceneMgr->getRootSceneNode()->createChildSceneNode();
+        node->attachObject(obj);
+        buildMesh();
+    }
+
+    void buildMesh()
+    {
+        obj->clear();
+
+        // Begin the manual object
+        obj->begin(StateControl::materialNameInUse, Ogre::RenderOperation::OT_TRIANGLE_LIST);
+
+        obj->end();
+    }
+    virtual void buildMeshInternal(ManualObject *obj) = 0;
+};
 
 class CostMapControl : StateControl
 {
