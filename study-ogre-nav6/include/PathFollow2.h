@@ -9,7 +9,7 @@ using namespace Ogre;
 class PathFollow2
 {
     std::vector<Ogre::Vector2> path;
-    float speed = 10.0f;
+    float speed = 30.0f;
     int target = 0;
     Vector2 position;
 

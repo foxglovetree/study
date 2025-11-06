@@ -6,6 +6,8 @@
 #include "CostMap.h"
 #include "StateControl.h"
 #include "HexGridPrinter.h"
+#include "CellMark.h"
+
 using namespace Ogre;
 
 class PathStateControl : StateControl
@@ -14,11 +16,10 @@ class PathStateControl : StateControl
     Ogre::SceneNode *pathNode;
 
     std::vector<Ogre::Vector2> currentPath;
-    int startx = -1;
-    int starty = -1;
-    int endx = -1;
-    int endy = -1;
+
     CostMap *costMap;
+    CellKey start = CellKey(-1, -1);
+    CellKey end = CellKey(-1, -1);
 
 public:
     PathStateControl(CostMap *costMap, Ogre::SceneManager *sceneMgr) : costMap(costMap)
@@ -29,17 +30,24 @@ public:
         pathNode->attachObject(pathObject);
     }
 
-    void clearPath(){
-        this->setPath(currentPath, -1,-1,-1,-1);
+    void clearPath()
+    {
+        this->setPath({}, CellKey(-1, -1), CellKey(-1, -1));
     }
 
-    void setPath(const std::vector<Ogre::Vector2> &path, int sx, int sy, int ex, int ey)
+    bool getStart(CellKey &start){
+        if(this->start.first == -1){
+            return false;
+        }
+        start = this->start;
+        return true;
+    }
+
+    void setPath(const std::vector<Ogre::Vector2> &path, CellKey ck1, CellKey ck2)
     {
         currentPath = path;
-        startx = sx;
-        starty = sy;
-        endx = ex;
-        endy = ey;
+        start = ck1;
+        end = ck2;
         this->rebuild();
     }
 
@@ -67,12 +75,12 @@ public:
             {
                 auto vertices = CostMap::calculateVerticesForXZ(x, y, CostMap::hexSize);
 
-                if (x == startx && y == starty)
+                if (x == start.first && y == start.second)
                 {
                     // Start point in green
                     drawHexagonTo(pathObject, vertices, Ogre::ColourValue::Green);
                 }
-                else if (x == endx && y == endy)
+                else if (x == end.first && y == end.second)
                 {
                     // End point in blue
                     drawHexagonTo(pathObject, vertices, Ogre::ColourValue::Blue);

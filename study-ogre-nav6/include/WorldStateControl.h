@@ -29,8 +29,6 @@ protected:
     Ogre::Root *root;
     CameraStateControl *frameListener;
 
-
-
     std::unordered_map<MarkType, CellMarkStateControl *> markStateControls;
 
     PathStateControl *pathStateControl;
@@ -52,13 +50,12 @@ public:
         // Create frame listener for main loop
         frameListener = new CameraStateControl(costMap, camera, inputState);
         root->addFrameListener(frameListener);
-        
-        markStateControls[MarkType::START] = new CellMarkStateControl(costMap, sceneMgr, MarkType::START);
-        markStateControls[MarkType::END] = new CellMarkStateControl(costMap, sceneMgr, MarkType::END);
-        
+
+        markStateControls[MarkType::ACTIVE] = new CellMarkStateControl(costMap, sceneMgr, MarkType::ACTIVE);
+
         this->pathStateControl = new PathStateControl(costMap, sceneMgr);
         this->actorStateControl = new ActorStateControl(costMap, sceneMgr);
-        root->addFrameListener(actorStateControl) ;
+        root->addFrameListener(actorStateControl);
     }
     PathStateControl *getPathStateControl()
     {
@@ -72,39 +69,27 @@ public:
     {
         return costMap;
     }
-    void markCell(int cx, int cy, MarkType mType)
-    {
-        // switch mark
-        bool marked = markStateControls[mType]->mark(cx, cy);
 
-        // todo raise a event.
-        if (!marked) // unmarked
+    void setTargetByCell(CellKey cKey)
+    {
+        State *actor = this->actorStateControl->getState();
+
+        if (!actor->isActive())
         {
             return;
         }
-        // marked.
-        if (mType == MarkType::END)
+        Vector3 aPos3 = this->actorStateControl->getNode()->getPosition();
+        Vector2 aPos2(aPos3.x, aPos3.z);
+        CellKey aCellKey;
+        bool hitCell = CellUtil::findCellByPoint(costMap, aPos2, aCellKey);
+        if (hitCell)
         {
-
-            State *actor = this->actorStateControl->getState();
-
-            if (actor->isActive())
-            {
-
-                Vector3 pos = this->actorStateControl->getNode()->getPosition();
-                int cx1, cy1;
-                bool hitCell = CellUtil::findCellByPoint(costMap, pos.x, pos.z, cx1, cy1);
-                if (hitCell)
-                {
-                    std::vector<Vector2> pathByKey = costMap->findPath(cx1, cy1, cx, cy);
-                    std::vector<Vector2> pathByPosition(pathByKey.size());
-                    CellUtil::translatePathToCellCenter(pathByKey, pathByPosition);
-                    Vector2 pos2(pos.x, pos.z);
-                    PathFollow2 *pathFollow = new PathFollow2(pos2, pathByPosition);
-                    actor->setPath(pathFollow);
-                    pathStateControl->setPath(pathByKey, cx1, cy1, cx, cy);
-                }
-            }
+            std::vector<Vector2> pathByKey = costMap->findPath(aCellKey, cKey);
+            std::vector<Vector2> pathByPosition(pathByKey.size());
+            CellUtil::translatePathToCellCenter(pathByKey, pathByPosition);
+            PathFollow2 *pathFollow = new PathFollow2(aPos2, pathByPosition);
+            actor->setPath(pathFollow);
+            pathStateControl->setPath(pathByKey, aCellKey, cKey);
         }
     }
 
@@ -149,18 +134,27 @@ public:
         SceneNode *node = actorMo->getParentSceneNode();
         const Vector3 &pos = node->getPosition();
         cout << "actor.pos:" << pos << "" << endl;
-        int cx;
-        int cy;
-        bool hitCell = CellUtil::findCellByPoint(costMap, pos.x, pos.z, cx, cy);
+        CellKey cKey;
+        bool hitCell = CellUtil::findCellByPoint(costMap, pos, cKey);
 
         if (hitCell)
         {
-            markCell(cx, cy, MarkType::START);
-            bool active = !actor->isActive();
-            actor->setActive(active);
+            bool active = actor->isActive();
             if (!active)
             {
-                this->pathStateControl->clearPath();
+                actor->setActive(true);
+                markStateControls[MarkType::ACTIVE]->mark(cKey, true);
+            }
+            else
+            {
+                actor->setActive(false);
+                actor->setPath(nullptr);
+                CellKey start; 
+                if(this->pathStateControl->getStart(start)){
+                    markStateControls[MarkType::ACTIVE]->mark(start, false);
+                    this->pathStateControl->clearPath();
+                }
+
             }
         }
     }

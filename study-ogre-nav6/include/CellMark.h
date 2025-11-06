@@ -6,9 +6,8 @@
 
 
 enum MarkType
-{
-    START = 0,
-    END = 1
+{    
+    ACTIVE
 };
 using CellKey = std::pair<int, int>;
 

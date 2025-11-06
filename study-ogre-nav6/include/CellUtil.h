@@ -17,6 +17,11 @@ public:
         }
     }
 
+    static bool findCellByPoint(CostMap *costMap, Vector3 point, CellKey &cKey)
+    {
+        return findCellByPoint(costMap, point.x, point.z, cKey.first, cKey.second);
+    }
+
     static bool findCellByPoint(CostMap *costMap, Vector2 point, CellKey &cKey)
     {
         return findCellByPoint(costMap, point.x, point.y, cKey.first, cKey.second);

@@ -75,14 +75,14 @@ public:
         if (evt.button == ButtonType::BUTTON_RIGHT)
         {
 
-            markByMouse(evt.x, evt.y);    
+            setTargetByMouse(evt.x, evt.y);    
                     
         }
 
         return true;
     }
 
-    void markByMouse(int mx, int my)
+    void setTargetByMouse(int mx, int my)
     {
         // normalized (0,1)
         float ndcX = mx / (float)viewport->getActualWidth();
@@ -97,14 +97,13 @@ public:
         {
             Ogre::Vector3 pos = ray.getPoint(hitGrd.second);
             
-            int cx = -1;
-            int cy = -1;
+            CellKey cKey;
             CostMap *costMap = this->wsc->getCostMap();
-            bool hitCell = CellUtil::findCellByPoint(costMap, pos.x, pos.z, cx, cy);
+            bool hitCell = CellUtil::findCellByPoint(costMap, Vector2(pos.x, pos.z), cKey);
             if (hitCell)
             {
                 //
-                wsc->markCell(cx, cy, MarkType::END);
+                wsc->setTargetByCell(cKey);
                 //
 
             }

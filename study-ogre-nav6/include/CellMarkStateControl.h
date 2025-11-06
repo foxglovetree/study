@@ -29,23 +29,22 @@ public:
         node->attachObject(obj);
     }
 
-    bool mark(int x, int y)
+    void mark(CellKey key, bool mark)
     {
         bool rt = false;
-        CellKey key = std::make_pair(x, y);
-        if (marks.erase(key) == 0)
-        {
+        
+        if(mark){
             marks.insert(key);
-            rt = true;
+        } else {
+            rt = marks.erase(key);
         }
+
         rebuildMarkMesh();
-        return rt;
+        
     }
 
-    bool isMarked(int cx, int cy, MarkType mtyp)
+    bool isMarked(CellKey key, MarkType mtyp)
     {
-        CellKey key = std::make_pair(cx, cy);
-
         return marks.find(key) != marks.end();
     }
 
