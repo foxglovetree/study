@@ -135,7 +135,7 @@ public:
         }
         //
 
-        // hight light the cell in which the actor stand.
+        // high light the cell in which the actor stand.
 
         SceneNode *node = actorMo->getParentSceneNode();
         const Vector3 &pos = node->getPosition();

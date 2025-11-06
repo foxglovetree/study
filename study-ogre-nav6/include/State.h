@@ -16,6 +16,7 @@ private:
     bool active = false;
 
     Vector3 target;
+    PathFollow2 * pathFolow;
 
 public:
     State(Type type)
