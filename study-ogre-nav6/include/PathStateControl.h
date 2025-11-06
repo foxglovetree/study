@@ -29,28 +29,6 @@ public:
         pathNode->attachObject(pathObject);
     }
 
-    void findPath(int x1, int y1,int x2, int y2)
-    {
-        // Find path
-
-        auto path = costMap->findPath(x1, y1, x2, y2);
-        std::cout << "Path found with " << path.size() << " hexes\n";
-        if (!path.empty())
-        {
-            float totalCost = costMap->calculatePathCost(path);
-            std::cout << "Total path cost: " << totalCost << "\n";
-            std::cout << "Path: ";
-            for (const auto &p : path)
-            {
-                std::cout << "(" << (int)p.x << "," << (int)p.y << ") ";
-            }
-            std::cout << "\n";
-        }
-        std::cout << "\n";
-        HexGridPrinter::printPathGrid(costMap, x1, y1, x2, y2, path);
-        setPath(path, x1, y1, x2, y2);
-    }
-    
     void clearPath(){
         this->setPath(currentPath, -1,-1,-1,-1);
     }

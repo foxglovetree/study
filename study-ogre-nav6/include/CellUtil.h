@@ -7,6 +7,21 @@
 class CellUtil
 {
 public:
+    static void translatePathToCellCenter(std::vector<Vector2> &pathByKey, std::vector<Vector2> &pathByPosition)
+    {
+        for (int i = 0; i < pathByKey.size(); i++)
+        {
+            auto p = pathByKey[i];
+            auto center = CostMap::calculateCenterForXZ(static_cast<int>(p.x), static_cast<int>(p.y), CostMap::hexSize);
+            pathByPosition[i] = Vector2(center.x, center.z);
+        }
+    }
+
+    static bool findCellByPoint(CostMap *costMap, Vector2 point, CellKey &cKey)
+    {
+        return findCellByPoint(costMap, point.x, point.y, cKey.first, cKey.second);
+    }
+
     static bool findCellByPoint(CostMap *costMap, float px, float py, int &cx, int &cy)
     {
 

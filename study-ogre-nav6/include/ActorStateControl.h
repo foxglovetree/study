@@ -8,7 +8,7 @@
 #define SCALE 2.0f
 using namespace Ogre;
 
-class ActorStateControl : Ogre::FrameListener, StateControl
+class ActorStateControl : public Ogre::FrameListener, StateControl
 {
     Entity *obj;
     CostMap *costMap;
@@ -41,7 +41,20 @@ public:
     {
         if (this->state->isActive())
         {
-            
+            PathFollow2 *pathFollow = this->state->getPath();
+            if (pathFollow != nullptr)
+            {
+                Vector2 pos;
+                if (pathFollow->move(evt.timeSinceLastFrame, pos))
+                {
+
+                    node->setPosition(pos.x, 0, pos.y);
+                }
+                else
+                {
+                    state->setPath(nullptr);
+                }
+            }
         }
         else
         {

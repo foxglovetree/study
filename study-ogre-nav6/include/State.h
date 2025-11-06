@@ -1,6 +1,9 @@
 #pragma once
-#include <Ogre.h>
 
+#include <Ogre.h>
+#include "PathFollow2.h"
+#include "CellUtil.h"
+#include "CostMap.h"
 using namespace Ogre;
 
 class State
@@ -15,8 +18,7 @@ private:
     Type type;
     bool active = false;
 
-    Vector3 target;
-    PathFollow2 * pathFolow;
+    PathFollow2 *pathFolow = nullptr;
 
 public:
     State(Type type)
@@ -33,15 +35,13 @@ public:
     {
         return this->active;
     }
-
-    void setTarget(const Vector3 &target)
+    PathFollow2 *getPath()
     {
-        this->target = target;
+        return this->pathFolow;
     }
-
-    const Vector3 &getTarget()
+    void setPath(PathFollow2 *path)
     {
-        return this->target;
+        this->pathFolow = path;
     }
 
     bool isType(Type type)

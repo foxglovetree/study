@@ -9,11 +9,17 @@ using namespace Ogre;
 class PathFollow2
 {
     std::vector<Ogre::Vector2> path;
-    float speed = 1.0f;
+    float speed = 10.0f;
     int target = 0;
     Vector2 position;
 
 public:
+    PathFollow2(Vector2 position, std::vector<Ogre::Vector2> path)
+    {
+        this->position = position;
+        this->path = path;
+    }
+
     bool move(float timeEscape, Vector2 &position)
     {
         bool rt = true;
@@ -30,6 +36,7 @@ public:
             float distance = direction.length();
             if (distance < 0.1f)
             {
+                target++;
                 continue;
             }
             direction.normalise();
@@ -39,6 +46,7 @@ public:
                 move = distance;
             }
             this->position += direction * move;
+            break;
         }
         position = this->position;
         return rt;

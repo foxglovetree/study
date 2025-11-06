@@ -29,6 +29,8 @@ protected:
     Ogre::Root *root;
     CameraStateControl *frameListener;
 
+
+
     std::unordered_map<MarkType, CellMarkStateControl *> markStateControls;
 
     PathStateControl *pathStateControl;
@@ -50,12 +52,13 @@ public:
         // Create frame listener for main loop
         frameListener = new CameraStateControl(costMap, camera, inputState);
         root->addFrameListener(frameListener);
-
+        
         markStateControls[MarkType::START] = new CellMarkStateControl(costMap, sceneMgr, MarkType::START);
         markStateControls[MarkType::END] = new CellMarkStateControl(costMap, sceneMgr, MarkType::END);
-
+        
         this->pathStateControl = new PathStateControl(costMap, sceneMgr);
         this->actorStateControl = new ActorStateControl(costMap, sceneMgr);
+        root->addFrameListener(actorStateControl) ;
     }
     PathStateControl *getPathStateControl()
     {
@@ -93,7 +96,13 @@ public:
                 bool hitCell = CellUtil::findCellByPoint(costMap, pos.x, pos.z, cx1, cy1);
                 if (hitCell)
                 {
-                    pathStateControl->findPath(cx1, cy1, cx, cy);
+                    std::vector<Vector2> pathByKey = costMap->findPath(cx1, cy1, cx, cy);
+                    std::vector<Vector2> pathByPosition(pathByKey.size());
+                    CellUtil::translatePathToCellCenter(pathByKey, pathByPosition);
+                    Vector2 pos2(pos.x, pos.z);
+                    PathFollow2 *pathFollow = new PathFollow2(pos2, pathByPosition);
+                    actor->setPath(pathFollow);
+                    pathStateControl->setPath(pathByKey, cx1, cy1, cx, cy);
                 }
             }
         }

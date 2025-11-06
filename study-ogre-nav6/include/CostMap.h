@@ -23,6 +23,7 @@
 #include <OgreFrameListener.h>
 #include <OgreRTShaderSystem.h>
 #include <OgreTechnique.h>
+#include "CellMark.h"
 
 struct PairHash
 {
@@ -47,7 +48,7 @@ struct NavNode
 class CostMap
 {
 public:
-    static constexpr float hexSize = 30.0f;//inner radius
+    static constexpr float hexSize = 30.0f; // inner radius
 
 private:
     // === Fixed hexagon neighbor offsets (flat-top) ===
@@ -118,6 +119,11 @@ public:
         int ds = abs(s1 - s2);
 
         return static_cast<float>(std::max({dq, dr, ds}) * DEFAULT_COST);
+    }
+
+    std::vector<Ogre::Vector2> findPath(CellKey start, CellKey end)
+    {
+        return findPath(start.first, start.second, end.first, end.second);
     }
 
     std::vector<Ogre::Vector2> findPath(int startX, int startY, int endX, int endY)
@@ -242,9 +248,8 @@ public:
         }
 
         return vertices;
-    
     }
-    
+
     static Ogre::Vector3 calculateCenterForXZ(int x, int z, float rad = CostMap::hexSize)
     {
         float centerX = x * 2 * rad + (z % 2 == 0 ? 0 : rad);
