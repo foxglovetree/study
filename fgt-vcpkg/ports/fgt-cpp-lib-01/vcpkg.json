@@ -1,8 +1,0 @@
-{
-  "name": "fgt-cpp-lib-01",
-  "version-semver": "0.2.0",
-  "description": "A short description of your library",
-  "homepage": "https://github.com/foxglovetree/cpp-lib-01",
-  "license": "MIT",
-  "supports": "!(arm | uwp)"
-}
