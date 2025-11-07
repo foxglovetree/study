@@ -4,7 +4,7 @@
 #include <Ogre.h>
 #include <OgreColourValue.h>
 #include "StateControl.h"
-#include "CellMark.h"
+#include "util/CellMark.h"
 using namespace Ogre;
 
 //

@@ -2,7 +2,7 @@
 #include <OgreApplicationContext.h>
 #include <OgreLogManager.h>
 #include "MaterialFactory.h"
-#include "HexGridPrinter.h"
+#include "util/HexGridPrinter.h"
 #include "InputState.h"
 #include "CameraStateControl.h"
 #include "MainInputListener.h"

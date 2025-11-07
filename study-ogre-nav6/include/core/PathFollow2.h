@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <Ogre.h>
-#include "Polyline2.h"
+#include "util/Polyline2.h"
 
 using namespace Ogre;
 

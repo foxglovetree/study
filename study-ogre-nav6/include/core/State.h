@@ -2,8 +2,8 @@
 
 #include <Ogre.h>
 #include "PathFollow2.h"
-#include "CellUtil.h"
-#include "CostMap.h"
+#include "util/CellUtil.h"
+#include "util/CostMap.h"
 using namespace Ogre;
 
 class State

@@ -27,8 +27,8 @@
 #include <OgreRenderWindow.h>
 #include <iostream>
 #include "WorldStateControl.h"
-#include "CellMark.h"
-#include "CellUtil.h"
+#include "util/CellMark.h"
+#include "util/CellUtil.h"
 
 using namespace OgreBites;
 using namespace Ogre;

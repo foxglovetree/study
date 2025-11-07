@@ -3,10 +3,10 @@
 #include <vector>
 #include <Ogre.h>
 #include <OgreColourValue.h>
-#include "CostMap.h"
+#include "util/CostMap.h"
 #include "StateControl.h"
-#include "HexGridPrinter.h"
-#include "CellMark.h"
+#include "util/HexGridPrinter.h"
+#include "util/CellMark.h"
 
 using namespace Ogre;
 

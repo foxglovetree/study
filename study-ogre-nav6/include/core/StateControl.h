@@ -3,7 +3,7 @@
 #include <vector>
 #include <Ogre.h>
 #include <OgreColourValue.h>
-#include "CostMap.h"
+#include "util/CostMap.h"
 using namespace Ogre;
 
 // Base class for model data and control.

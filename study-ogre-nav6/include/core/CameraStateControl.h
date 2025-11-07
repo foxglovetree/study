@@ -23,12 +23,12 @@
 #include <OgreFrameListener.h>
 #include <OgreRTShaderSystem.h>
 #include <OgreTechnique.h>
-#include "CostMap.h"
+#include "util/CostMap.h"
 
 #include "StateControl.h"
 #include "InputState.h"
-#include "CameraUtil.h"
-#include "Polygon2.h"
+#include "util/CameraUtil.h"
+#include "util/Polygon2.h"
 
 using namespace Ogre;
 

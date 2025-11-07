@@ -9,10 +9,6 @@
     {
       "name": "fmt",
       "platform": "windows"
-    },
-    {
-      "name": "fgt-cpp-lib-01",
-      "platform": "windows"
     }
   ]
 }

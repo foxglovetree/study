@@ -4,14 +4,14 @@
 #include <vector>
 #include <Ogre.h>
 #include <OgreColourValue.h>
-#include "CostMap.h"
+#include "util/CostMap.h"
 #include "CellStateControl.h"
 #include "InputState.h"
 #include "PathStateControl.h"
 #include "CellMarkStateControl.h"
 #include <unordered_map>
 #include "ActorStateControl.h"
-#include "CellUtil.h"
+#include "util/CellUtil.h"
 #include "State.h"
 
 using namespace Ogre;

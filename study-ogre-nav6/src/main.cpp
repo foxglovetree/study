@@ -23,10 +23,9 @@
 #include <OgreFrameListener.h>
 #include <OgreRTShaderSystem.h>
 #include <OgreTechnique.h>
-#include "CostMap.h"
-
-#include "HexGridPrinter.h"
-#include "HexGridApp.h"
+#include "util/CostMap.h"
+#include "util/HexGridPrinter.h"
+#include "core/HexGridApp.h"
 // === Custom hash function ===
 //
 
