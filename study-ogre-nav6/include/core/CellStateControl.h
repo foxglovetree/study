@@ -7,7 +7,7 @@
 using namespace Ogre;
 
 //
-class CellStateControl : StateControl
+class CellStateControl : public StateControl
 {
 public:
 private:
@@ -16,14 +16,28 @@ private:
     CostMap *costMap;
 
 public:
-    CellStateControl(CostMap *costMap, Ogre::SceneManager *sceneMgr) : costMap(costMap)
+    CellStateControl(CostMap *costMap) : costMap(costMap)
     {
-        // Create hexagonal grid object
+        // Create hexagonal grid object         
+
+        /*
         obj = sceneMgr->createManualObject();
         node = sceneMgr->getRootSceneNode()->createChildSceneNode();
         node->attachObject(obj);
         //
         buildCellMesh();
+        */
+    }
+    void init() override
+    {
+        Ogre::SceneManager *sceneMgr = parent->find<Ogre::SceneManager>();
+        
+        obj = sceneMgr->createManualObject();
+        node = sceneMgr->getRootSceneNode()->createChildSceneNode();
+        node->attachObject(obj);
+        //
+        buildCellMesh();
+        StateControl::init();
     }
 
     void buildCellMesh()
@@ -102,5 +116,4 @@ public:
             obj->triangle(p1, p3, p4);
         }
     }
-
 };

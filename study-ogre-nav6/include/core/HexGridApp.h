@@ -5,7 +5,6 @@
 #include "util/HexGridPrinter.h"
 #include "InputState.h"
 #include "CameraStateControl.h"
-#include "MainInputListener.h"
 #include "WorldStateControl.h"
 
 using namespace OgreBites;
@@ -16,7 +15,6 @@ private:
     
 
     CameraStateControl *frameListener;
-    MainInputListener *keyHandler;
 Ogre::SceneManager *sceneMgr;
     Ogre::RenderWindow *window;
     Ogre::Camera *camera;
@@ -94,14 +92,9 @@ public:
         MaterialFactory::createMaterials();
 
         // Create world state and controls.
-        wsc = new WorldStateControl(root, costMap, sceneMgr, camera);
-
-
-        // Add input listener
-        keyHandler = new MainInputListener(wsc, window, vp, camera);
-        addInputListener(keyHandler);
-
-        
+        wsc = new WorldStateControl(this, root, costMap, sceneMgr, camera, window,vp);
+        wsc->init();
+    
         
     }
 

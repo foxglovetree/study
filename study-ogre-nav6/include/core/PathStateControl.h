@@ -10,7 +10,7 @@
 
 using namespace Ogre;
 
-class PathStateControl : StateControl
+class PathStateControl : public StateControl
 {
     Ogre::ManualObject *pathObject;
     Ogre::SceneNode *pathNode;
@@ -22,9 +22,13 @@ class PathStateControl : StateControl
     CellKey end = CellKey(-1, -1);
 
 public:
-    PathStateControl(CostMap *costMap, Ogre::SceneManager *sceneMgr) : costMap(costMap)
+    PathStateControl(CostMap *costMap) : costMap(costMap)
     {
         // Create path object
+    }
+    void init() override
+    {
+        Ogre::SceneManager *sceneMgr = parent->find<Ogre::SceneManager>();
         pathObject = sceneMgr->createManualObject("PathObject");
         pathNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
         pathNode->attachObject(pathObject);
@@ -35,8 +39,10 @@ public:
         this->setPath({}, CellKey(-1, -1), CellKey(-1, -1));
     }
 
-    bool getStart(CellKey &start){
-        if(this->start.first == -1){
+    bool getStart(CellKey &start)
+    {
+        if (this->start.first == -1)
+        {
             return false;
         }
         start = this->start;

@@ -13,11 +13,14 @@
 #include "ActorStateControl.h"
 #include "util/CellUtil.h"
 #include "State.h"
+#include "IWorld.h"
+#include "MainInputListener.h"
+#include "ActorStateControl.h"
 
 using namespace Ogre;
 using namespace std;
 // root state & control.
-class WorldStateControl : StateControl
+class WorldStateControl : public StateControl, public IWorld
 {
 protected:
     InputState *inputState;
@@ -33,44 +36,55 @@ protected:
 
     PathStateControl *pathStateControl;
     ActorStateControl *actorStateControl;
+    Camera *camera;
+    ApplicationContext *app;
+    RenderWindow *window;
+    Viewport *vp;
 
 public:
-    WorldStateControl(Ogre::Root *root, CostMap *costMap, Ogre::SceneManager *sceneMgr, Camera *camera) : costMap(costMap)
+    WorldStateControl(ApplicationContext *app, Ogre::Root *root, CostMap *costMap, Ogre::SceneManager *sceneMgr, Camera *camera, RenderWindow *window, Viewport *vp) : costMap(costMap)
     {
+        this->vp = vp;
+        this->app = app;
+        this->window = window;
         this->root = root;
-        this->inputState = new InputState();
         this->sceneMgr = sceneMgr;
+        this->camera = camera;
+        this->inputState = new InputState();
+    }
 
-        this->costMapControl = new CostMapControl(costMap);
+    void init() override
+    {
+        this->addObject<Ogre::SceneManager>(this->sceneMgr);
+        this->addObject<Camera>(this->camera);
         int width = costMap->getWidth();
         int height = costMap->getHeight();
-
-        cells = new CellStateControl(costMap, sceneMgr);
-
+        this->costMapControl = new CostMapControl(costMap);
+        cells = new CellStateControl(costMap);
         // Create frame listener for main loop
-        frameListener = new CameraStateControl(costMap, camera, inputState);
+        frameListener = new CameraStateControl(costMap);
+        this->addComponent<CellStateControl>(cells);
+        this->addComponent<InputState>(this->inputState);
+        this->addComponent<CameraStateControl>(frameListener);
+
         root->addFrameListener(frameListener);
-
         markStateControls[MarkType::ACTIVE] = new CellMarkStateControl(costMap, sceneMgr, MarkType::ACTIVE);
-
-        this->pathStateControl = new PathStateControl(costMap, sceneMgr);
+        this->pathStateControl = new PathStateControl(costMap);
+        this->addComponent<PathStateControl>(this->pathStateControl);
         this->actorStateControl = new ActorStateControl(costMap, sceneMgr);
         root->addFrameListener(actorStateControl);
+        MainInputListener *keyHandler = new MainInputListener(this, window, vp, camera);
+        app->addInputListener(keyHandler);
+        this->addComponent<MainInputListener>(keyHandler);
+        StateControl::init();
     }
-    PathStateControl *getPathStateControl()
-    {
-        return this->pathStateControl;
-    }
-    InputState *getInputState()
-    {
-        return this->inputState;
-    }
+
     CostMap *getCostMap()
     {
         return costMap;
     }
 
-    void setTargetByCell(CellKey cKey)
+    void setTargetByCell(CellKey cKey)override
     {
         State *actor = this->actorStateControl->getState();
 
@@ -93,7 +107,7 @@ public:
         }
     }
 
-    void pickActorByRay(Ray &ray)
+    void pickActorByRay(Ray &ray) override
     {
         // 创建射线查询对象
         Ogre::RaySceneQuery *rayQuery = sceneMgr->createRayQuery(ray);
@@ -149,12 +163,12 @@ public:
             {
                 actor->setActive(false);
                 actor->setPath(nullptr);
-                CellKey start; 
-                if(this->pathStateControl->getStart(start)){
+                CellKey start;
+                if (this->pathStateControl->getStart(start))
+                {
                     markStateControls[MarkType::ACTIVE]->mark(start, false);
                     this->pathStateControl->clearPath();
                 }
-
             }
         }
     }

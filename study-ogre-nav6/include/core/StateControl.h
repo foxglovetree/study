@@ -4,16 +4,18 @@
 #include <Ogre.h>
 #include <OgreColourValue.h>
 #include "util/CostMap.h"
+#include "util/Component.h"
 using namespace Ogre;
 
 // Base class for model data and control.
-class StateControl
+class StateControl : public Component
 {
 
 public:
     // Draw a single hexagon to a specific object
     static inline const std::string materialNameToCreate = "ABC";
     static inline const std::string materialNameInUse = "ABC";
+
     static void drawHexagonTo(Ogre::ManualObject *obj,
                               const std::vector<Ogre::Vector2> &vertices,
                               const Ogre::ColourValue &color1)
@@ -57,6 +59,13 @@ public:
             obj->triangle(baseIndex, p1, p2);
         }
     }
+    StateControl(){
+        
+    }
+    void init() override
+    {
+        Component::init();
+    }
 };
 
 class SimpleStateControl : StateControl
@@ -86,7 +95,7 @@ public:
     virtual void buildMeshInternal(ManualObject *obj) = 0;
 };
 
-class CostMapControl : StateControl
+class CostMapControl : public StateControl
 {
 
 public:

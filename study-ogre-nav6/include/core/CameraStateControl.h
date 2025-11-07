@@ -33,7 +33,7 @@
 using namespace Ogre;
 
 // === Frame Listener class for main loop ===
-class CameraStateControl : public Ogre::FrameListener, StateControl
+class CameraStateControl : public Ogre::FrameListener, public StateControl
 {
 private:
     bool quit;
@@ -44,10 +44,15 @@ private:
     CostMap *costMap;
 
 public:
-    CameraStateControl(CostMap *costMap, Ogre::Camera *camera,
-                       InputState *inputState) : quit(false), costMap(costMap), inputState(inputState),
+    CameraStateControl(CostMap *costMap) : quit(false), costMap(costMap), 
                                                  camera(camera), viewport(viewport)
     {
+    }
+    void init()override{
+
+        //
+        this->camera = this->parent->find<Ogre::Camera>();
+        this->inputState=this->parent->find<InputState>();
     }
 
     bool checkViewportInBorderOfGround()

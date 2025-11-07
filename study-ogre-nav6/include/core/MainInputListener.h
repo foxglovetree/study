@@ -26,9 +26,9 @@
 #include "InputState.h"
 #include <OgreRenderWindow.h>
 #include <iostream>
-#include "WorldStateControl.h"
 #include "util/CellMark.h"
 #include "util/CellUtil.h"
+#include "IWorld.h"
 
 using namespace OgreBites;
 using namespace Ogre;
@@ -36,32 +36,34 @@ using namespace std;
 // === Custom hash function ===
 //
 // === Input handler for closing application ===
-class MainInputListener : public OgreBites::InputListener
+class MainInputListener : public OgreBites::InputListener, public Component
 {
 private:
     RenderWindow *window;
     Viewport *viewport;
-    Camera *camera;    
-    WorldStateControl *wsc;
+    Camera *camera;
     InputState *inputState;
-
+    IWorld * wsc;
 public:
-    MainInputListener(WorldStateControl *wsc,
+    MainInputListener(IWorld *wsc,
                       RenderWindow *window, Viewport *viewport,
                       Camera *camera) : window(window),
-                                        viewport(viewport), camera(camera), wsc(wsc)
+                                        viewport(viewport), camera(camera)
     {
-
-        this->inputState = wsc->getInputState();
+        this->wsc = wsc;
     };
+    void init() override
+    {
+        this->inputState = parent->find<InputState>();
+    }
 
     void pickByMouse(int mx, int my)
-    {   
+    {
         // normalized (0,1)
         float ndcX = mx / (float)viewport->getActualWidth();
         float ndcY = my / (float)viewport->getActualHeight();
         Ogre::Ray ray = camera->getCameraToViewportRay(ndcX, ndcY);
-        
+
         wsc->pickActorByRay(ray);
     }
 
@@ -70,13 +72,12 @@ public:
         if (evt.button == ButtonType::BUTTON_LEFT)
         {
             pickByMouse(evt.x, evt.y);
-            //markByMouse(MarkType::START, evt.x, evt.y);
+            // markByMouse(MarkType::START, evt.x, evt.y);
         }
         if (evt.button == ButtonType::BUTTON_RIGHT)
         {
 
-            setTargetByMouse(evt.x, evt.y);    
-                    
+            setTargetByMouse(evt.x, evt.y);
         }
 
         return true;
@@ -96,7 +97,7 @@ public:
         if (hitGrd.first)
         {
             Ogre::Vector3 pos = ray.getPoint(hitGrd.second);
-            
+
             CellKey cKey;
             CostMap *costMap = this->wsc->getCostMap();
             bool hitCell = CellUtil::findCellByPoint(costMap, Vector2(pos.x, pos.z), cKey);
@@ -105,12 +106,10 @@ public:
                 //
                 wsc->setTargetByCell(cKey);
                 //
-
             }
-            //cout << "worldPoint(" << pickX << ",0," << pickZ << "),cellIdx:[" << cx << "," << cy << "]" << endl;
+            // cout << "worldPoint(" << pickX << ",0," << pickZ << "),cellIdx:[" << cx << "," << cy << "]" << endl;
         }
     }
-
 
     bool mouseReleased(const MouseButtonEvent &evt) override
     {
