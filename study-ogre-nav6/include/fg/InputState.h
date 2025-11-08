@@ -1,7 +1,7 @@
 #pragma once
 #include "StateControl.h"
 
-struct InputState : StateControl
+struct InputState
 {
     bool left = false;
     bool right = false;

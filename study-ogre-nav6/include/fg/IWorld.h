@@ -5,12 +5,7 @@
 #include <Ogre.h>
 #include <OgreColourValue.h>
 #include "util/CostMap.h"
-#include "CellStateControl.h"
-#include "InputState.h"
-#include "PathStateControl.h"
-#include "CellMarkStateControl.h"
 #include <unordered_map>
-#include "ActorStateControl.h"
 #include "util/CellUtil.h"
 #include "State.h"
 

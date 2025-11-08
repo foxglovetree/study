@@ -4,64 +4,74 @@
 #include <Ogre.h>
 #include <OgreColourValue.h>
 #include "StateControl.h"
-#include "util/CellMark.h"
 using namespace Ogre;
 
 //
-class CellMarkStateControl :public StateControl
+class CellStateControl : public StateControl
 {
 public:
-    static inline const std::string materialNameSelected = "SelectedMaterial";
-
 private:
     Ogre::ManualObject *obj;
     Ogre::SceneNode *node;
     CostMap *costMap;
-    MarkType markType;
-    std::unordered_set<CellKey, PairHash> marks;
 
 public:
-    CellMarkStateControl(CostMap *costMap, Ogre::SceneManager *sceneMgr,
-                         MarkType type) : costMap(costMap), markType(type)
+    CellStateControl() 
     {
+    }
+    void init(InitContext &ctx) override
+    {
+        costMap = this->find<CostMap>();
+        Ogre::SceneManager *sceneMgr = parent->find<Ogre::SceneManager>();
+
         obj = sceneMgr->createManualObject();
         node = sceneMgr->getRootSceneNode()->createChildSceneNode();
         node->attachObject(obj);
+        //
+        buildCellMesh();
+        StateControl::init(ctx);
     }
 
-    void mark(CellKey key, bool mark)
+    void buildCellMesh()
     {
-        bool rt = false;
-        
-        if(mark){
-            marks.insert(key);
-        } else {
-            rt = marks.erase(key);
-        }
 
-        rebuildMarkMesh();
-        
-    }
-
-    bool isMarked(CellKey key, MarkType mtyp)
-    {
-        return marks.find(key) != marks.end();
-    }
-
-    void rebuildMarkMesh()
-    {
         obj->clear();
-        obj->begin(materialNameSelected, Ogre::RenderOperation::OT_TRIANGLE_LIST);
-        for (const auto &key : marks)
+
+        // Begin the manual object
+        obj->begin(MaterialNames::materialNameInUse, Ogre::RenderOperation::OT_TRIANGLE_LIST);
+        int width = costMap->getWidth();
+        int height = costMap->getHeight();
+        for (int x = 0; x < width; x++)
         {
-            int cx = key.first;
-            int cy = key.second;
-            auto verticesInner = CostMap::calculateVerticesForXZ(cx, cy, CostMap::hexSize, 0.75f);
-            auto verticesOuter = CostMap::calculateVerticesForXZ(cx, cy, CostMap::hexSize, 0.95f);
-            drawHexagonRing(obj, verticesInner, verticesOuter, ColourValue(1.0f, 1.0f, 0.8f, 0.0f), ColourValue(1.0f, 1.0f, 0.8f, 0.6f));
+            for (int y = 0; y < height; y++)
+            {
+                int cost = costMap->getCost(x, y);
+                Ogre::ColourValue color = getCostColor(cost);
+                auto vertices = CostMap::calculateVerticesForXZ(x, y, CostMap::hexSize);
+                StateControl::drawHexagonTo(obj, vertices, color);
+            }
         }
 
+        // End the manual object
         obj->end();
+    }
+
+    // Get color based on cost
+    Ogre::ColourValue getCostColor(int cost) const
+    {
+        switch (cost)
+        {
+        case CostMap::OBSTACLE:
+            return Ogre::ColourValue::Red;
+        case CostMap::DEFAULT_COST:
+            return Ogre::ColourValue(0.8f, 0.6f, 0.2f); // light Sand color
+        case 2:
+            return Ogre::ColourValue(0.6f, 0.4f, 0.1f); // Dark Sand color
+        case 3:
+            return Ogre::ColourValue(0.2f, 0.4f, 0.8f); // Water color
+        default:
+            return Ogre::ColourValue(0.7f, 0.7f, 0.7f); // light gray
+        }
     }
 
     void drawHexagonRing(Ogre::ManualObject *obj,

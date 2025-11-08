@@ -4,18 +4,17 @@
 #include <vector>
 #include <Ogre.h>
 #include <OgreColourValue.h>
-#include "util/CostMap.h"
+#include "fg/util/CostMap.h"
+#include "fg/InputState.h"
+#include <unordered_map>
+#include "fg/util/CellUtil.h"
+#include "fg/State.h"
+#include "fg/IWorld.h"
+#include "fg/core/MainInputListener.h"
+#include "ActorStateControl.h"
 #include "CellStateControl.h"
-#include "InputState.h"
 #include "PathStateControl.h"
 #include "CellMarkStateControl.h"
-#include <unordered_map>
-#include "ActorStateControl.h"
-#include "util/CellUtil.h"
-#include "State.h"
-#include "IWorld.h"
-#include "MainInputListener.h"
-#include "ActorStateControl.h"
 
 using namespace Ogre;
 using namespace std;
@@ -45,7 +44,7 @@ public:
     {
     }
 
-    void init(Component::InitContext &ctx) override
+    void init(InitContext &ctx) override
     {
         this->app = this->find<ApplicationContext>();
         this->sceneMgr = this->find<Ogre::SceneManager>();
@@ -64,7 +63,7 @@ public:
         
         // Create frame listener for main loop
         this->addComponent<CellStateControl>(new CellStateControl());
-        this->addComponent<InputState>(new InputState());
+        this->addObject<InputState>(new InputState());
         frameListener = this->addComponent<CameraStateControl>(new CameraStateControl());
 
         root->addFrameListener(frameListener);

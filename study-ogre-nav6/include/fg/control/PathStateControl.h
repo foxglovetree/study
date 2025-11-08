@@ -3,10 +3,10 @@
 #include <vector>
 #include <Ogre.h>
 #include <OgreColourValue.h>
-#include "util/CostMap.h"
+#include "fg/util/CostMap.h"
 #include "StateControl.h"
-#include "util/HexGridPrinter.h"
-#include "util/CellMark.h"
+#include "fg/util/HexGridPrinter.h"
+#include "fg/util/CellMark.h"
 
 using namespace Ogre;
 
@@ -26,7 +26,7 @@ public:
     {
         // Create path object
     }
-    void init(Component::InitContext &ctx) override
+    void init(InitContext &ctx) override
     {
         costMap = this->parent->find<CostMap>();
         Ogre::SceneManager *sceneMgr = parent->find<Ogre::SceneManager>();
@@ -71,7 +71,7 @@ public:
         }
 
         // Begin the manual object
-        pathObject->begin(materialNameInUse, Ogre::RenderOperation::OT_TRIANGLE_LIST);
+        pathObject->begin(MaterialNames::materialNameInUse, Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
         int width = costMap->getWidth();
         int height = costMap->getHeight();

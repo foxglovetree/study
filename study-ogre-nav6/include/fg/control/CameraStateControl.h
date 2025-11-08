@@ -23,12 +23,12 @@
 #include <OgreFrameListener.h>
 #include <OgreRTShaderSystem.h>
 #include <OgreTechnique.h>
-#include "util/CostMap.h"
+#include "fg/util/CostMap.h"
 
 #include "StateControl.h"
-#include "InputState.h"
-#include "util/CameraUtil.h"
-#include "util/Polygon2.h"
+#include "fg/InputState.h"
+#include "fg/util/CameraUtil.h"
+#include "fg/util/Polygon2.h"
 
 using namespace Ogre;
 
@@ -47,7 +47,7 @@ public:
     CameraStateControl() : quit(false)
     {
     }
-    void init(Component::InitContext&ctx) override
+    void init(InitContext&ctx) override
     {
 
         //

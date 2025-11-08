@@ -23,12 +23,12 @@
 #include <OgreFrameListener.h>
 #include <OgreRTShaderSystem.h>
 #include <OgreTechnique.h>
-#include "InputState.h"
 #include <OgreRenderWindow.h>
 #include <iostream>
-#include "util/CellMark.h"
-#include "util/CellUtil.h"
-#include "IWorld.h"
+#include "fg/util/CellMark.h"
+#include "fg/util/CellUtil.h"
+#include "fg/IWorld.h"
+#include "fg/InputState.h"
 
 using namespace OgreBites;
 using namespace Ogre;
@@ -52,7 +52,7 @@ public:
     {
         this->wsc = wsc;
     };
-    void init(Component::InitContext &ctx) override
+    void init(InitContext &ctx) override
     {
         this->inputState = parent->find<InputState>();
     }

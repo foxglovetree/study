@@ -23,9 +23,9 @@
 #include <OgreFrameListener.h>
 #include <OgreRTShaderSystem.h>
 #include <OgreTechnique.h>
-#include "util/CostMap.h"
-#include "util/HexGridPrinter.h"
-#include "core/HexGridApp.h"
+#include "fg/util/CostMap.h"
+#include "fg/util/HexGridPrinter.h"
+#include "fg/control/HexGridApp.h"
 // === Custom hash function ===
 //
 
@@ -45,7 +45,7 @@ int main()
 
         // Initialize Ogre application context
         auto app = std::make_unique<HexGridApp>();
-        Component::InitContext ctx;
+        InitContext ctx;
         app->init(ctx);                
         app->startRendering();
         app->close();
