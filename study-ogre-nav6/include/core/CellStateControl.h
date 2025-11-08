@@ -18,20 +18,11 @@ private:
 public:
     CellStateControl(CostMap *costMap) : costMap(costMap)
     {
-        // Create hexagonal grid object         
-
-        /*
-        obj = sceneMgr->createManualObject();
-        node = sceneMgr->getRootSceneNode()->createChildSceneNode();
-        node->attachObject(obj);
-        //
-        buildCellMesh();
-        */
     }
     void init() override
     {
         Ogre::SceneManager *sceneMgr = parent->find<Ogre::SceneManager>();
-        
+
         obj = sceneMgr->createManualObject();
         node = sceneMgr->getRootSceneNode()->createChildSceneNode();
         node->attachObject(obj);

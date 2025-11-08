@@ -26,18 +26,24 @@ private:
     Ogre::Viewport *vp;
     CostMap *costMap;
     WorldStateControl *wsc;
-    std::unique_ptr<ApplicationContext> appCtx;
+    
     Ogre::Root *root;
-
+    std::unique_ptr<ApplicationContext> appCtx;
 public:
     HexGridApp()
     {
     }
+    ~HexGridApp()
+    {
+        
+    }
 
     void init() override
-    {
+    {   
         appCtx = std::make_unique<ApplicationContext>("HexagonalGridVisualizer");
         appCtx->initApp();
+        
+        this->addObject<ApplicationContext>(appCtx.get());
 
         // log level
         LogManager *lm = LogManager::getSingletonPtr();
@@ -104,8 +110,8 @@ public:
     {
         root->startRendering();
     }
-    void destroy() override
-    {
+
+    void close(){
         std::cout << "Closing application.\n";
         appCtx->closeApp();
     }

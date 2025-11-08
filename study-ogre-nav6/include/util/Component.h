@@ -3,99 +3,136 @@
 #include <unordered_map>
 #include <any>
 #include <typeindex>
+#include <functional>
 
-template <typename T>
-using CreateFunc = std::function<T()>;
+using CreatorFunc = std::function<std::any()>;
 
 class Component
 {
 public:
+    using CreatorFunc = std::function<Component *()>;
+
 protected:
     struct Wrapper
     {
         std::type_index type;
         std::any any;
-        Component *comp;
-        std::function<void(std::any)> deleteFunc;
 
-        Wrapper(std::type_index type, Component *comp, std::any any) : type(type), comp(comp), any(any)
+        Wrapper(std::type_index type, std::any any_) : type(type), any(any_)
         {
-        }
-        Wrapper(std::type_index type, std::any any) : type(type), any(any)
-        {
-            this->comp = nullptr;
         }
         ~Wrapper()
         {
-            deleteFunc(any);
         }
     };
 
     std::unordered_map<std::type_index, std::vector<Wrapper *>> children;
     Component *parent = nullptr;
-    std::vector<Wrapper *> list;
+    std::vector<Component *> comps;
+
+    //
+    std::unordered_map<std::type_index, std::function<void()>> creators;
 
 public:
     Component()
     {
     }
 
-    void doAdd(Wrapper *ele)
+    ~Component()
     {
-        children[ele->type].push_back(ele);
-        list.push_back(ele);
-        
+        deleteChildren();
+    }
+    void deleteChildren()
+    {
+        for (auto it = comps.rbegin(); it != comps.rend(); ++it)
+        {
+            delete (*it);
+        }
+        comps.clear();
+        children.clear();
+    }
+
+    void doAdd(std::type_index &type, std::any any, Component *comp)
+    {
+        Wrapper *wrapper = new Wrapper(type, any);
+        children[type].push_back(wrapper);
+        if (comp)
+        {
+            comps.push_back(comp);
+        }
     }
 
     template <typename T>
-    void addComponent(Component *comp)
+    void registerCreator(CreatorFunc func)
+    {
+        std::type_index type = typeid(T);
+        creators->emplace(type, [func, this]() -> void
+                          { this->addComponent<T>(func()); });
+    }
+
+    template <typename T>
+    void addComponent(T *comp)
     {
         std::type_index type = typeid(T);
 
-        doAdd(new Wrapper(type, comp, std::any((T *)comp)));
-        comp->parent = this;
+        doAdd(type, comp, comp);
+        Component *c = (Component *)comp;
+        c->parent = this;
     }
 
     template <typename T>
-    void addObject(T *obj)
+    void addObject(std::any obj)
     {
         std::type_index type = typeid(T);
-        doAdd(new Wrapper(type, std::any(obj)));
+        doAdd(type, obj, nullptr);
     }
 
     template <typename T>
-    T *find()
+    T *find(bool resolve = false)
     {
         std::type_index type = typeid(T);
         std::vector<Wrapper *> &vec = children[type];
-        if (vec.empty())
+        return doFind<T>(type, vec, resolve);
+    }
+
+    template <typename T>
+    T *doFind(std::type_index &type, std::vector<Wrapper *> &vec, bool resolve)
+    {
+        if (!vec.empty())
+        {
+            return std::any_cast<T *>(vec[0]->any);
+        }
+
+        if (!resolve)
         {
             return nullptr;
         }
-        Wrapper *wrapper = vec[0];
 
-        return std::any_cast<T *>(wrapper->any);
+        auto it = this->creators.find(type);
+        if (it == this->creators.end())
+        {
+            return nullptr;
+        }
+
+        std::function<void()> func = it->second;
+        func();
+        return doFind<T>(type, vec, false);
     }
 
     virtual void init()
     {
-        for (auto entry : this->children)
-        {
-            for (auto wrapper : entry.second)
-            {
-                if (wrapper->comp == nullptr)
-                {
-                    continue;
-                }
-                wrapper->comp->init();
-            }
-        }
+        this->initChildrens();
     }
-    virtual void destroy()
+
+    void initChildrens()
     {
-        for (auto it = list.rbegin(); it != list.rend(); ++it)
+        for (auto it = comps.begin(); it != comps.end(); ++it)
         {
-            delete (*it);
+            Component *comp = (*it);
+            if (comp)
+            {
+                comp->init();
+            }
         }
     }
 };

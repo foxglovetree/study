@@ -44,10 +44,10 @@ int main()
         std::cout << "=========================================\n\n";
 
         // Initialize Ogre application context
-        auto appCtx = std::make_unique<HexGridApp>();
-        appCtx->init();                
-        appCtx->startRendering();
-        
+        auto app = std::make_unique<HexGridApp>();
+        app->init();                
+        app->startRendering();
+        app->close();
     }
     catch (const std::exception &e)
     {
