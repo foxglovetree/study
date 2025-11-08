@@ -11,6 +11,25 @@ class Component
 {
 public:
     using CreatorFunc = std::function<Component *()>;
+    class InitContext
+    {
+        std::unordered_map<std::type_index, std::any> objects;
+        template <typename T>
+        T *getObject(std::type_index type)
+        {
+            auto it = objects.find(type);
+            if (it != objects.end())
+            {
+                return std::any_cast<T>(it->second);
+            }
+            return T();
+        }
+        template <typename T>
+        void addObject(std::type_index type, std::any obj)
+        {
+            objects[type] = obj;
+        }
+    };
 
 protected:
     struct Wrapper
@@ -32,6 +51,7 @@ protected:
 
     //
     std::unordered_map<std::type_index, std::function<void()>> creators;
+    //
 
 public:
     Component()
@@ -40,16 +60,6 @@ public:
 
     ~Component()
     {
-        deleteChildren();
-    }
-    void deleteChildren()
-    {
-        for (auto it = comps.rbegin(); it != comps.rend(); ++it)
-        {
-            delete (*it);
-        }
-        comps.clear();
-        children.clear();
     }
 
     void doAdd(std::type_index &type, std::any any, Component *comp)
@@ -71,13 +81,14 @@ public:
     }
 
     template <typename T>
-    void addComponent(T *comp)
+    T *addComponent(T *comp)
     {
         std::type_index type = typeid(T);
 
         doAdd(type, comp, comp);
         Component *c = (Component *)comp;
         c->parent = this;
+        return comp;
     }
 
     template <typename T>
@@ -92,7 +103,16 @@ public:
     {
         std::type_index type = typeid(T);
         std::vector<Wrapper *> &vec = children[type];
-        return doFind<T>(type, vec, resolve);
+        T *rt = doFind<T>(type, vec, resolve);
+        if (rt)
+        {
+            return rt;
+        }
+        if (this->parent)
+        {
+            return this->parent->find<T>(resolve);
+        }
+        return nullptr;
     }
 
     template <typename T>
@@ -119,19 +139,19 @@ public:
         return doFind<T>(type, vec, false);
     }
 
-    virtual void init()
+    virtual void init(InitContext &ctx)
     {
-        this->initChildrens();
+        this->initChildrens(ctx);
     }
 
-    void initChildrens()
+    void initChildrens(InitContext &ctx)
     {
         for (auto it = comps.begin(); it != comps.end(); ++it)
         {
             Component *comp = (*it);
             if (comp)
             {
-                comp->init();
+                comp->init(ctx);
             }
         }
     }

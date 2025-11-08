@@ -23,7 +23,6 @@ using namespace std;
 class WorldStateControl : public StateControl, public IWorld
 {
 protected:
-    InputState *inputState;
     CellStateControl *cells;
     Ogre::SceneManager *sceneMgr;
 
@@ -42,41 +41,43 @@ protected:
     Viewport *vp;
 
 public:
-    WorldStateControl(ApplicationContext *app, Ogre::Root *root, CostMap *costMap, Ogre::SceneManager *sceneMgr, Camera *camera, RenderWindow *window, Viewport *vp) : costMap(costMap)
+    WorldStateControl()
     {
-        this->vp = vp;
-        this->app = app;
-        this->window = window;
-        this->root = root;
-        this->sceneMgr = sceneMgr;
-        this->camera = camera;
-        this->inputState = new InputState();
     }
 
-    void init() override
+    void init(Component::InitContext &ctx) override
     {
+        this->app = this->find<ApplicationContext>();
+        this->sceneMgr = this->find<Ogre::SceneManager>();
+        vp = this->find<Viewport>();
+        camera = this->find<Camera>();
+        costMap = this->find<CostMap>();
+        root = this->app->getRoot();
+        window = this->app->getRenderWindow();
+        
+
         this->addObject<Ogre::SceneManager>(this->sceneMgr);
         this->addObject<Camera>(this->camera);
         int width = costMap->getWidth();
         int height = costMap->getHeight();
         this->costMapControl = new CostMapControl(costMap);
-        cells = new CellStateControl(costMap);
+        
         // Create frame listener for main loop
-        frameListener = new CameraStateControl(costMap);
-        this->addComponent<CellStateControl>(cells);
-        this->addComponent<InputState>(this->inputState);
-        this->addComponent<CameraStateControl>(frameListener);
+        this->addComponent<CellStateControl>(new CellStateControl());
+        this->addComponent<InputState>(new InputState());
+        frameListener = this->addComponent<CameraStateControl>(new CameraStateControl());
 
         root->addFrameListener(frameListener);
         markStateControls[MarkType::ACTIVE] = new CellMarkStateControl(costMap, sceneMgr, MarkType::ACTIVE);
-        this->pathStateControl = new PathStateControl(costMap);
-        this->addComponent<PathStateControl>(this->pathStateControl);
-        this->actorStateControl = new ActorStateControl(costMap, sceneMgr);
+        
+        pathStateControl = this->addComponent<PathStateControl>(new PathStateControl());
+        this->actorStateControl = this->addComponent<ActorStateControl>(new ActorStateControl())   ;
+
         root->addFrameListener(actorStateControl);
         MainInputListener *keyHandler = new MainInputListener(this, window, vp, camera);
         app->addInputListener(keyHandler);
         this->addComponent<MainInputListener>(keyHandler);
-        StateControl::init();
+        StateControl::init(ctx);
     }
 
     CostMap *getCostMap()
@@ -84,7 +85,7 @@ public:
         return costMap;
     }
 
-    void setTargetByCell(CellKey cKey)override
+    void setTargetByCell(CellKey cKey) override
     {
         State *actor = this->actorStateControl->getState();
 

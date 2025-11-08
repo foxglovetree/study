@@ -8,7 +8,7 @@
 #define SCALE 2.0f
 using namespace Ogre;
 
-class ActorStateControl : public Ogre::FrameListener, StateControl
+class ActorStateControl : public Ogre::FrameListener, public StateControl
 {
     Entity *obj;
     CostMap *costMap;
@@ -16,9 +16,13 @@ class ActorStateControl : public Ogre::FrameListener, StateControl
     SceneNode *node;
 
 public:
-    ActorStateControl(CostMap *costMap, SceneManager *sceneMgr)
+    ActorStateControl()
     {
-        this->costMap = costMap;
+    }
+    void init(Component::InitContext &ctx) override
+    {
+        CostMap *costMap = this->find<CostMap>();
+        SceneManager *sceneMgr = this->find<Ogre::SceneManager>();
         obj = sceneMgr->createEntity("Sinbad.mesh");
         obj->setQueryFlags(0x00000001);
         this->state = new State(State::Type::ACTOR);

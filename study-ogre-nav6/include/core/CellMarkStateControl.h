@@ -8,7 +8,7 @@
 using namespace Ogre;
 
 //
-class CellMarkStateControl : StateControl
+class CellMarkStateControl :public StateControl
 {
 public:
     static inline const std::string materialNameSelected = "SelectedMaterial";

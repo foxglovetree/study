@@ -52,7 +52,7 @@ public:
     {
         this->wsc = wsc;
     };
-    void init() override
+    void init(Component::InitContext &ctx) override
     {
         this->inputState = parent->find<InputState>();
     }

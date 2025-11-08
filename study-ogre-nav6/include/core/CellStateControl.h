@@ -16,11 +16,12 @@ private:
     CostMap *costMap;
 
 public:
-    CellStateControl(CostMap *costMap) : costMap(costMap)
+    CellStateControl() 
     {
     }
-    void init() override
+    void init(Component::InitContext &ctx) override
     {
+        costMap = this->find<CostMap>();
         Ogre::SceneManager *sceneMgr = parent->find<Ogre::SceneManager>();
 
         obj = sceneMgr->createManualObject();
@@ -28,7 +29,7 @@ public:
         node->attachObject(obj);
         //
         buildCellMesh();
-        StateControl::init();
+        StateControl::init(ctx);
     }
 
     void buildCellMesh()

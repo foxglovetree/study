@@ -45,7 +45,8 @@ int main()
 
         // Initialize Ogre application context
         auto app = std::make_unique<HexGridApp>();
-        app->init();                
+        Component::InitContext ctx;
+        app->init(ctx);                
         app->startRendering();
         app->close();
     }

@@ -44,15 +44,16 @@ private:
     CostMap *costMap;
 
 public:
-    CameraStateControl(CostMap *costMap) : quit(false), costMap(costMap), 
-                                                 camera(camera), viewport(viewport)
+    CameraStateControl() : quit(false)
     {
     }
-    void init()override{
+    void init(Component::InitContext&ctx) override
+    {
 
         //
+        this->costMap = this->parent->find<CostMap>();
         this->camera = this->parent->find<Ogre::Camera>();
-        this->inputState=this->parent->find<InputState>();
+        this->inputState = this->parent->find<InputState>();
     }
 
     bool checkViewportInBorderOfGround()

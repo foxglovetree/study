@@ -25,20 +25,21 @@ private:
 
     Ogre::Viewport *vp;
     CostMap *costMap;
-    WorldStateControl *wsc;
     
     Ogre::Root *root;
     std::unique_ptr<ApplicationContext> appCtx;
+   
 public:
     HexGridApp()
     {
+        this->addComponent<WorldStateControl>(new WorldStateControl());
     }
     ~HexGridApp()
     {
         
     }
 
-    void init() override
+    void init(Component::InitContext &ctx) override
     {   
         appCtx = std::make_unique<ApplicationContext>("HexagonalGridVisualizer");
         appCtx->initApp();
@@ -57,6 +58,7 @@ public:
 
         root = appCtx->getRoot();
         Ogre::SceneManager *sceneMgr = root->createSceneManager();
+        this->addObject<Ogre::SceneManager>(sceneMgr);
 
         // Register our scene with the RTSS (Required for proper lighting/shaders)
         Ogre::RTShader::ShaderGenerator *shadergen = Ogre::RTShader::ShaderGenerator::getSingletonPtr();
@@ -72,7 +74,7 @@ public:
 
         // Sand: cost 2
         CostMap *costMap = new CostMap(12, 10);
-
+        this->addObject<CostMap>(costMap);
         // 假设你已经有 sceneMgr 和 camera
         Ogre::Light *light = sceneMgr->createLight("MyPointLight");
         light->setType(Ogre::Light::LT_POINT);
@@ -87,6 +89,7 @@ public:
         camera->setNearClipDistance(0.1f);
         camera->setFarClipDistance(1000.0f);
         camera->setAutoAspectRatio(true);
+        this->addObject<Camera>(camera);
 
         // Create camera node and set position and direction
         cameraNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
@@ -97,13 +100,12 @@ public:
         // Create viewport
         vp = window->addViewport(camera);
         vp->setBackgroundColour(Ogre::ColourValue(0.2f, 0.2f, 0.2f));
-
+        this->addObject<Viewport>(vp);
         // Create materials before buding mesh.
         MaterialFactory::createMaterials();
 
         // Create world state and controls.
-        wsc = new WorldStateControl(appCtx.get(), root, costMap, sceneMgr, camera, window, vp);
-        wsc->init();
+        Component::init(ctx);
     }
 
     void startRendering()

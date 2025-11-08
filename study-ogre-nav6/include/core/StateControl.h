@@ -62,13 +62,13 @@ public:
     StateControl(){
         
     }
-    void init() override
+    void init(Component::InitContext &ctx) override
     {
-        Component::init();
+        Component::init(ctx);
     }
 };
 
-class SimpleStateControl : StateControl
+class SimpleStateControl : public StateControl
 {
 protected:
     ManualObject *obj;

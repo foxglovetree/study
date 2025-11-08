@@ -22,12 +22,13 @@ class PathStateControl : public StateControl
     CellKey end = CellKey(-1, -1);
 
 public:
-    PathStateControl(CostMap *costMap) : costMap(costMap)
+    PathStateControl() 
     {
         // Create path object
     }
-    void init() override
+    void init(Component::InitContext &ctx) override
     {
+        costMap = this->parent->find<CostMap>();
         Ogre::SceneManager *sceneMgr = parent->find<Ogre::SceneManager>();
         pathObject = sceneMgr->createManualObject("PathObject");
         pathNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
