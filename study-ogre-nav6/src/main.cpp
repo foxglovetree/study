@@ -45,13 +45,9 @@ int main()
 
         // Initialize Ogre application context
         auto appCtx = std::make_unique<HexGridApp>();
-        appCtx->initApp();        
-        // Start rendering loop - this will call frameStarted automatically
-        
+        appCtx->init();                
         appCtx->startRendering();
-
-        std::cout << "Closing application.\n";
-        appCtx->closeApp();
+        
     }
     catch (const std::exception &e)
     {

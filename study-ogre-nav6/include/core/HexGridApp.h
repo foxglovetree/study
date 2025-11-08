@@ -9,13 +9,11 @@
 
 using namespace OgreBites;
 using namespace Ogre;
-class HexGridApp : public ApplicationContext
+class HexGridApp : public Component
 {
 private:
-    
-
     CameraStateControl *frameListener;
-Ogre::SceneManager *sceneMgr;
+    Ogre::SceneManager *sceneMgr;
     Ogre::RenderWindow *window;
     Ogre::Camera *camera;
     Ogre::SceneNode *cameraNode;
@@ -26,26 +24,32 @@ Ogre::SceneManager *sceneMgr;
     Ogre::SceneNode *pathNode;
 
     Ogre::Viewport *vp;
-    CostMap* costMap;
-    WorldStateControl* wsc;
+    CostMap *costMap;
+    WorldStateControl *wsc;
+    std::unique_ptr<ApplicationContext> appCtx;
+    Ogre::Root *root;
+
 public:
-    HexGridApp() : ApplicationContext("HexagonalGridVisualizer")
+    HexGridApp()
     {
     }
-    void initApp()
+
+    void init() override
     {
-        ApplicationContextBase::initApp();
+        appCtx = std::make_unique<ApplicationContext>("HexagonalGridVisualizer");
+        appCtx->initApp();
+
         // log level
         LogManager *lm = LogManager::getSingletonPtr();
         Log *log = lm->getDefaultLog();
         log->setDebugOutputEnabled(false);
         log->setLogDetail(Ogre::LL_LOW);
         //
-        InputListener *ls = getImGuiInputListener();
+        InputListener *ls = appCtx->getImGuiInputListener();
 
-        RenderWindow *window = this->getRenderWindow();
+        RenderWindow *window = appCtx->getRenderWindow();
 
-        Ogre::Root *root = getRoot();
+        root = appCtx->getRoot();
         Ogre::SceneManager *sceneMgr = root->createSceneManager();
 
         // Register our scene with the RTSS (Required for proper lighting/shaders)
@@ -62,7 +66,7 @@ public:
 
         // Sand: cost 2
         CostMap *costMap = new CostMap(12, 10);
-        
+
         // 假设你已经有 sceneMgr 和 camera
         Ogre::Light *light = sceneMgr->createLight("MyPointLight");
         light->setType(Ogre::Light::LT_POINT);
@@ -88,18 +92,21 @@ public:
         vp = window->addViewport(camera);
         vp->setBackgroundColour(Ogre::ColourValue(0.2f, 0.2f, 0.2f));
 
-        // Create materials before buding mesh.   
+        // Create materials before buding mesh.
         MaterialFactory::createMaterials();
 
         // Create world state and controls.
-        wsc = new WorldStateControl(this, root, costMap, sceneMgr, camera, window,vp);
+        wsc = new WorldStateControl(appCtx.get(), root, costMap, sceneMgr, camera, window, vp);
         wsc->init();
-    
-        
     }
 
     void startRendering()
     {
-        mRoot->startRendering();
+        root->startRendering();
+    }
+    void destroy() override
+    {
+        std::cout << "Closing application.\n";
+        appCtx->closeApp();
     }
 };

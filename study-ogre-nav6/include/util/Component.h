@@ -4,15 +4,20 @@
 #include <any>
 #include <typeindex>
 
+template <typename T>
+using CreateFunc = std::function<T()>;
+
 class Component
 {
-
+public:
 protected:
     struct Wrapper
     {
         std::type_index type;
         std::any any;
         Component *comp;
+        std::function<void(std::any)> deleteFunc;
+
         Wrapper(std::type_index type, Component *comp, std::any any) : type(type), comp(comp), any(any)
         {
         }
@@ -20,21 +25,34 @@ protected:
         {
             this->comp = nullptr;
         }
+        ~Wrapper()
+        {
+            deleteFunc(any);
+        }
     };
 
     std::unordered_map<std::type_index, std::vector<Wrapper *>> children;
     Component *parent = nullptr;
+    std::vector<Wrapper *> list;
 
 public:
     Component()
     {
     }
 
+    void doAdd(Wrapper *ele)
+    {
+        children[ele->type].push_back(ele);
+        list.push_back(ele);
+        
+    }
+
     template <typename T>
     void addComponent(Component *comp)
     {
         std::type_index type = typeid(T);
-        children[type].push_back(new Wrapper(type, comp, std::any((T *)comp)));
+
+        doAdd(new Wrapper(type, comp, std::any((T *)comp)));
         comp->parent = this;
     }
 
@@ -42,7 +60,7 @@ public:
     void addObject(T *obj)
     {
         std::type_index type = typeid(T);
-        children[type].push_back(new Wrapper(type, std::any(obj)));
+        doAdd(new Wrapper(type, std::any(obj)));
     }
 
     template <typename T>
@@ -71,6 +89,13 @@ public:
                 }
                 wrapper->comp->init();
             }
+        }
+    }
+    virtual void destroy()
+    {
+        for (auto it = list.rbegin(); it != list.rend(); ++it)
+        {
+            delete (*it);
         }
     }
 };
