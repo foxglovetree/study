@@ -15,8 +15,8 @@
 #include "CellStateControl.h"
 #include "PathStateControl.h"
 #include "CellMarkStateControl.h"
-#include "fg/WorldState.h"
-#include "fg/RootState.h"
+#include "fg/core/WorldState.h"
+#include "fg/core/RootState.h"
 using namespace Ogre;
 using namespace std;
 // root state & control.
@@ -70,8 +70,8 @@ public:
         markStateControls[MarkType::ACTIVE] = new CellMarkStateControl(costMap, sceneMgr, MarkType::ACTIVE);
 
         pathStateControl = this->addComponent<PathStateControl>(new PathStateControl());
-
-        this->actorStateControl = this->addComponent<ActorStateControl>(new ActorStateControl(this->state->getActorState()));
+        ActorState * actor = new ActorState(this->state, costMap);
+        this->actorStateControl = this->addComponent<ActorStateControl>(new ActorStateControl(actor));
 
         root->addFrameListener(actorStateControl);
         MainInputListener *keyHandler = new MainInputListener(this, window, vp, camera);
@@ -87,25 +87,10 @@ public:
 
     void setTargetByCell(CellKey cKey) override
     {
-        State *actor = this->state->getActorState();
-
-        if (!actor->isActive())
-        {
-            return;
-        }
-        Vector3 aPos3 = this->actorStateControl->getNode()->getPosition();
-        Vector2 aPos2(aPos3.x, aPos3.z);
-        CellKey aCellKey;
-        bool hitCell = CellUtil::findCellByPoint(costMap, aPos2, aCellKey);
-        if (hitCell)
-        {
-            std::vector<Vector2> pathByKey = costMap->findPath(aCellKey, cKey);
-            std::vector<Vector2> pathByPosition(pathByKey.size());
-            CellUtil::translatePathToCellCenter(pathByKey, pathByPosition);
-            PathFollow2 *pathFollow = new PathFollow2(aPos2, pathByPosition);
-            actor->setPath(pathFollow);
-            pathStateControl->setPath(pathByKey, aCellKey, cKey);
-        }
+        SceneNode *root = this->sceneMgr->getRootSceneNode();
+        State::visitState(root, [cKey](MovableObject * mo,State* s){
+            s->setTargetByCell(mo, cKey);
+        });
     }
 
     void pickActorByRay(Ray &ray) override
@@ -118,7 +103,7 @@ public:
         // 执行查询
         Ogre::RaySceneQueryResult &result = rayQuery->execute();
 
-        ActorState *actor = nullptr;
+        State *actor = nullptr;
         MovableObject *actorMo = nullptr;
         // 遍历结果
         for (auto &it : result)
@@ -143,34 +128,7 @@ public:
             return;
         }
         //
-
+        actor->afterPick(actorMo);
         // high light the cell in which the actor stand.
-
-        SceneNode *node = actorMo->getParentSceneNode();
-        const Vector3 &pos = node->getPosition();
-        cout << "actor.pos:" << pos << "" << endl;
-        CellKey cKey;
-        bool hitCell = CellUtil::findCellByPoint(costMap, pos, cKey);
-
-        if (hitCell)
-        {
-            bool active = actor->isActive();
-            if (!active)
-            {
-                actor->setActive(true);
-                markStateControls[MarkType::ACTIVE]->mark(cKey, true);
-            }
-            else
-            {
-                actor->setActive(false);
-                actor->setPath(nullptr);
-                CellKey start;
-                if (this->pathStateControl->getStart(start))
-                {
-                    markStateControls[MarkType::ACTIVE]->mark(start, false);
-                    this->pathStateControl->clearPath();
-                }
-            }
-        }
     }
 };

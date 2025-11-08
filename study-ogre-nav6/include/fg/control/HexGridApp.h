@@ -5,7 +5,7 @@
 #include "fg/util/HexGridPrinter.h"
 #include "CameraStateControl.h"
 #include "WorldStateControl.h"
-#include "fg/RootState.h"
+#include "fg/core/RootState.h"
 using namespace OgreBites;
 using namespace Ogre;
 class HexGridApp : public Component

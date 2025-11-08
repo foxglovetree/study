@@ -1,11 +1,11 @@
 #pragma once
 
 #include <Ogre.h>
-#include "PathFollow2.h"
-#include "util/CellUtil.h"
-#include "util/CostMap.h"
+#include "fg/PathFollow2.h"
+#include "fg/util/CellUtil.h"
+#include "fg/util/CostMap.h"
 using namespace Ogre;
-#include "State.h"
+#include "fg/State.h"
 #include "WorldState.h"
 class RootState : public State
 {
