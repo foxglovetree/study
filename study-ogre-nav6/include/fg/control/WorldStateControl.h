@@ -88,7 +88,7 @@ public:
     void setTargetByCell(CellKey cKey) override
     {
         SceneNode *root = this->sceneMgr->getRootSceneNode();
-        State::visitState(root, [cKey](MovableObject * mo,State* s){
+        State::forEachState(root, [cKey](MovableObject * mo,State* s){
             s->setTargetByCell(mo, cKey);
         });
     }

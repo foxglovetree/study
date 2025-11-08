@@ -11,23 +11,7 @@ using namespace Ogre;
 class State
 {
 public:
-    static void forEachState(SceneNode *node, std::function<void(MovableObject *mo, State *)> func)
-    {
-        visitState(node, func);
-        auto cMap = node->getChildren();
-
-        for (auto it = cMap.begin(); it != cMap.end(); ++it)
-        {
-            Node *node = *it;
-            SceneNode *cNode = dynamic_cast<SceneNode *>(node);
-            if (cNode)
-            {
-                visitState(cNode, func);
-            }
-        }
-    }
-
-    static void visitState(SceneNode *node, std::function<void(MovableObject *mo, State *)> func)
+    static void forEachState(SceneNode *node, std::function<void(MovableObject *mo, State *)> func, bool recursive = true)
     {
         int numObjs = node->numAttachedObjects();
         for (int i = 0; i < numObjs; i++)
@@ -39,6 +23,22 @@ public:
                 continue;
             }
             func(mo, s);
+        }
+
+        if(!recursive){
+            return ;
+        }
+
+        auto cMap = node->getChildren();
+
+        for (auto it = cMap.begin(); it != cMap.end(); ++it)
+        {
+            Node *node = *it;
+            SceneNode *cNode = dynamic_cast<SceneNode *>(node);
+            if (cNode)
+            {
+                forEachState(cNode, func, true);
+            }
         }
     }
 
