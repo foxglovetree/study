@@ -3,11 +3,11 @@
 #include <vector>
 #include <Ogre.h>
 #include <OgreColourValue.h>
-#include "StateControl.h"
+#include "fg/StateControl.h"
 using namespace Ogre;
 
 //
-class CellStateControl : public StateControl
+class CellStateControl : public StateControl<State>
 {
 public:
 private:

@@ -3,14 +3,14 @@
 #include <vector>
 #include <Ogre.h>
 #include <OgreColourValue.h>
-#include "StateControl.h"
+#include "fg/StateControl.h"
 #include "fg/util/CellMark.h"
 #include "fg/MaterialNames.h"
 
 using namespace Ogre;
 
 //
-class CellMarkStateControl :public StateControl
+class CellMarkStateControl :public StateControl<State>
 {
 public:
 

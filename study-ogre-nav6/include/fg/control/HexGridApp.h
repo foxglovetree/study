@@ -5,7 +5,7 @@
 #include "fg/util/HexGridPrinter.h"
 #include "CameraStateControl.h"
 #include "WorldStateControl.h"
-
+#include "fg/RootState.h"
 using namespace OgreBites;
 using namespace Ogre;
 class HexGridApp : public Component
@@ -24,26 +24,28 @@ private:
 
     Ogre::Viewport *vp;
     CostMap *costMap;
-    
-    Ogre::Root *root;
-    std::unique_ptr<ApplicationContext> appCtx;
-   
+
+    RootState *state;
+
 public:
     HexGridApp()
     {
-        this->addComponent<WorldStateControl>(new WorldStateControl());
+        this->state = new RootState();
+
+        this->addComponent<WorldStateControl>(new WorldStateControl(this->state->getWorld()));
     }
     ~HexGridApp()
     {
-        
     }
 
     void init(InitContext &ctx) override
-    {   
-        appCtx = std::make_unique<ApplicationContext>("HexagonalGridVisualizer");
+    {
+        ApplicationContext *appCtx = new ApplicationContext("HexagonalGridVisualizer");
         appCtx->initApp();
-        
-        this->addObject<ApplicationContext>(appCtx.get());
+        this->state->set(appCtx);
+
+        Ogre::Root *root = this->state->getRoot();
+        this->addObject<ApplicationContext>(appCtx);
 
         // log level
         LogManager *lm = LogManager::getSingletonPtr();
@@ -55,7 +57,6 @@ public:
 
         RenderWindow *window = appCtx->getRenderWindow();
 
-        root = appCtx->getRoot();
         Ogre::SceneManager *sceneMgr = root->createSceneManager();
         this->addObject<Ogre::SceneManager>(sceneMgr);
 
@@ -109,11 +110,14 @@ public:
 
     void startRendering()
     {
+
+        Ogre::Root *root = this->state->getRoot();
         root->startRendering();
     }
 
-    void close(){
+    void close()
+    {
         std::cout << "Closing application.\n";
-        appCtx->closeApp();
+        state->getAppContext()->closeApp();
     }
 };

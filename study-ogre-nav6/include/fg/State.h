@@ -8,22 +8,25 @@ using namespace Ogre;
 
 class State
 {
-public:
-    enum Type
-    {
-        ACTOR
-    };
-
 private:
-    Type type;
     bool active = false;
 
     PathFollow2 *pathFolow = nullptr;
+    State *parent;
 
 public:
-    State(Type type)
+    State(State *parent)
     {
-        this->type = type;
+        this->parent = parent;
+    }
+
+    virtual Ogre::Root *getRoot()
+    {
+        if (this->parent)
+        {
+            return this->parent->getRoot();
+        }
+        return nullptr;
     }
 
     void setActive(bool active)
@@ -42,10 +45,5 @@ public:
     void setPath(PathFollow2 *path)
     {
         this->pathFolow = path;
-    }
-
-    bool isType(Type type)
-    {
-        return this->type == type;
     }
 };

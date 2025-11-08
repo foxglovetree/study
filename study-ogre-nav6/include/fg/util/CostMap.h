@@ -45,7 +45,7 @@ struct NavNode
     bool operator>(const NavNode &other) const { return f() > other.f(); }
 };
 
-class CostMap
+class CostMap 
 {
 public:
     static constexpr float hexSize = 30.0f; // inner radius

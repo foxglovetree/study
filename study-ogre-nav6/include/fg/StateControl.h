@@ -1,20 +1,28 @@
 
 #pragma once
+#include <type_traits>
 #include <vector>
 #include <Ogre.h>
 #include <OgreColourValue.h>
+#include "fg/defines.h"
 #include "fg/util/CostMap.h"
 #include "fg/util/Component.h"
+#include "fg/State.h"
 #include "fg/MaterialNames.h"
-using namespace Ogre;
 
+using namespace Ogre;
 // Base class for model data and control.
+//, typename = std::enable_if_t<std::is_base_of_v<State, T>>
+template <typename T>
 class StateControl : public Component
 {
+    //static_assert(std::is_base_of_v<State, T>, "T must be derived from State!");
+
+protected:
+    T *state;
 
 public:
     // Draw a single hexagon to a specific object
-    
 
     static void drawHexagonTo(Ogre::ManualObject *obj,
                               const std::vector<Ogre::Vector2> &vertices,
@@ -58,44 +66,24 @@ public:
             int p2 = baseIndex + (i + 1) % 6 + 1;
             obj->triangle(baseIndex, p1, p2);
         }
+    } //
+    StateControl()
+    {
+        this->state = nullptr;
     }
-    StateControl(){
-        
+
+    StateControl(T *state)
+    {
+        this->state = state;
     }
+
     void init(InitContext &ctx) override
     {
         Component::init(ctx);
     }
 };
 
-class SimpleStateControl : public StateControl
-{
-protected:
-    ManualObject *obj;
-    SceneNode *node;
-
-public:
-    SimpleStateControl(Ogre::SceneManager *sceneMgr)
-    {
-        obj = sceneMgr->createManualObject();
-        node = sceneMgr->getRootSceneNode()->createChildSceneNode();
-        node->attachObject(obj);
-        buildMesh();
-    }
-
-    void buildMesh()
-    {
-        obj->clear();
-
-        // Begin the manual object
-        obj->begin(MaterialNames::materialNameInUse, Ogre::RenderOperation::OT_TRIANGLE_LIST);
-
-        obj->end();
-    }
-    virtual void buildMeshInternal(ManualObject *obj) = 0;
-};
-
-class CostMapControl : public StateControl
+class CostMapControl : public StateControl<CostMap>
 {
 
 public:

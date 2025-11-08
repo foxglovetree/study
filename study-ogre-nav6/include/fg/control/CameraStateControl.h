@@ -25,7 +25,7 @@
 #include <OgreTechnique.h>
 #include "fg/util/CostMap.h"
 
-#include "StateControl.h"
+#include "fg/StateControl.h"
 #include "fg/InputState.h"
 #include "fg/util/CameraUtil.h"
 #include "fg/util/Polygon2.h"
@@ -33,7 +33,7 @@
 using namespace Ogre;
 
 // === Frame Listener class for main loop ===
-class CameraStateControl : public Ogre::FrameListener, public StateControl
+class CameraStateControl : public Ogre::FrameListener, public StateControl<State>
 {
 private:
     bool quit;

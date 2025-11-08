@@ -4,13 +4,13 @@
 #include <Ogre.h>
 #include <OgreColourValue.h>
 #include "fg/util/CostMap.h"
-#include "StateControl.h"
+#include "fg/StateControl.h"
 #include "fg/util/HexGridPrinter.h"
 #include "fg/util/CellMark.h"
 
 using namespace Ogre;
 
-class PathStateControl : public StateControl
+class PathStateControl : public StateControl<State>
 {
     Ogre::ManualObject *pathObject;
     Ogre::SceneNode *pathNode;

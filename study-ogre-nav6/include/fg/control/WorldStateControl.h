@@ -15,11 +15,12 @@
 #include "CellStateControl.h"
 #include "PathStateControl.h"
 #include "CellMarkStateControl.h"
-
+#include "fg/WorldState.h"
+#include "fg/RootState.h"
 using namespace Ogre;
 using namespace std;
 // root state & control.
-class WorldStateControl : public StateControl, public IWorld
+class WorldStateControl : public StateControl<WorldState>, public IWorld
 {
 protected:
     CellStateControl *cells;
@@ -40,7 +41,7 @@ protected:
     Viewport *vp;
 
 public:
-    WorldStateControl()
+    WorldStateControl(WorldState *state) : StateControl(state)
     {
     }
 
@@ -53,14 +54,13 @@ public:
         costMap = this->find<CostMap>();
         root = this->app->getRoot();
         window = this->app->getRenderWindow();
-        
 
         this->addObject<Ogre::SceneManager>(this->sceneMgr);
         this->addObject<Camera>(this->camera);
         int width = costMap->getWidth();
         int height = costMap->getHeight();
         this->costMapControl = new CostMapControl(costMap);
-        
+
         // Create frame listener for main loop
         this->addComponent<CellStateControl>(new CellStateControl());
         this->addObject<InputState>(new InputState());
@@ -68,9 +68,10 @@ public:
 
         root->addFrameListener(frameListener);
         markStateControls[MarkType::ACTIVE] = new CellMarkStateControl(costMap, sceneMgr, MarkType::ACTIVE);
-        
+
         pathStateControl = this->addComponent<PathStateControl>(new PathStateControl());
-        this->actorStateControl = this->addComponent<ActorStateControl>(new ActorStateControl())   ;
+
+        this->actorStateControl = this->addComponent<ActorStateControl>(new ActorStateControl(this->state->getActorState()));
 
         root->addFrameListener(actorStateControl);
         MainInputListener *keyHandler = new MainInputListener(this, window, vp, camera);
@@ -86,7 +87,7 @@ public:
 
     void setTargetByCell(CellKey cKey) override
     {
-        State *actor = this->actorStateControl->getState();
+        State *actor = this->state->getActorState();
 
         if (!actor->isActive())
         {
@@ -117,7 +118,7 @@ public:
         // 执行查询
         Ogre::RaySceneQueryResult &result = rayQuery->execute();
 
-        State *actor = nullptr;
+        ActorState *actor = nullptr;
         MovableObject *actorMo = nullptr;
         // 遍历结果
         for (auto &it : result)
@@ -129,9 +130,9 @@ public:
             }
 
             State *state = Ogre::any_cast<State *>(any);
-            if (state->isType(State::Type::ACTOR))
+            if (ActorState *actorPtr = dynamic_cast<ActorState *>(state))
             {
-                actor = state;
+                actor = actorPtr;
                 actorMo = it.movable;
             }
             break;
