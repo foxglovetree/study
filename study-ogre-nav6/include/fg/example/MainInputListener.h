@@ -49,26 +49,10 @@ public:
         this->wsc = wsc;
     }
 
-    void pickByMouse(int mx, int my)
-    {
-        // normalized (0,1)
-        Viewport *viewport = core->getViewport();
-        Camera *camera = core->getCamera();
-
-        float ndcX = mx / (float)viewport->getActualWidth();
-        float ndcY = my / (float)viewport->getActualHeight();
-        Ogre::Ray ray = camera->getCameraToViewportRay(ndcX, ndcY);
-
-        wsc->pickActorByRay(ray);
-    }
 
     bool mousePressed(const MouseButtonEvent &evt) override
     {
-        if (evt.button == ButtonType::BUTTON_LEFT)
-        {
-            pickByMouse(evt.x, evt.y);
-            // markByMouse(MarkType::START, evt.x, evt.y);
-        }
+        
         if (evt.button == ButtonType::BUTTON_RIGHT)
         {
 

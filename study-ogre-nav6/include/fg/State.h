@@ -69,10 +69,6 @@ public:
         this->parent = nullptr;
     }
 
-    virtual bool afterPick(MovableObject *mo)
-    {
-        return false;
-    };
     virtual bool setTargetByCell(MovableObject *mo, CellKey cKey2)
     {
         return false;

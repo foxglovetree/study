@@ -18,5 +18,4 @@ class IWorld
 public:
     virtual CostMap * getCostMap() = 0;
     virtual void setTargetByCell(CellKey cKey) = 0;
-    virtual void pickActorByRay(Ray &ray) = 0;
 };

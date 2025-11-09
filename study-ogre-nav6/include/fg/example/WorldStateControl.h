@@ -20,6 +20,7 @@
 #include "fg/core/CameraState.h"
 #include "fg/WorldState.h"
 #include "fg/core/SimpleInputState.h"
+#include "fg/core/ActorClickPicker.h"
 using namespace Ogre;
 using namespace std;
 // root state & control.
@@ -45,11 +46,11 @@ public:
 
         // Create frame listener for main loop
         this->cells = new CellStateControl(costMap, core);
-        
-        this->inputState = new SimpleInputState(core->getCamera(),core->getWindow());
+
+        this->inputState = new SimpleInputState(core->getCamera(), core->getWindow());
 
         CameraState *cameraState = new CameraState(core->getCamera(), inputState);
-        cameraState->setGround(this->ground);//
+        cameraState->setGround(this->ground); //
         root->addFrameListener(cameraState);
         markStateControls[MarkType::ACTIVE] = new CellMarkStateControl(costMap, core, MarkType::ACTIVE);
 
@@ -59,6 +60,7 @@ public:
         MainInputListener *keyHandler = new MainInputListener(this, core);
         core->getAppContext()->addInputListener(keyHandler);
         core->getAppContext()->addInputListener(inputState);
+        core->getAppContext()->addInputListener(new ActorClickPicker(core->getCamera(), core->getSceneManager(), core->getViewport()));
     }
 
     CostMap *getCostMap()
@@ -72,45 +74,5 @@ public:
         SceneNode *rNode = sMgr->getRootSceneNode();
         State::forEachState(rNode, [cKey](MovableObject *mo, State *s)
                             { s->setTargetByCell(mo, cKey); });
-    }
-
-    void pickActorByRay(Ray &ray) override
-    {
-        // 创建射线查询对象
-        SceneManager *sMgr = core->getSceneManager();
-        Ogre::RaySceneQuery *rayQuery = sMgr->createRayQuery(ray);
-        rayQuery->setSortByDistance(true);  // 按距离排序（最近的优先）
-        rayQuery->setQueryMask(0x00000001); // 与 Entity 的查询掩码匹配
-
-        // 执行查询
-        Ogre::RaySceneQueryResult &result = rayQuery->execute();
-
-        State *actor = nullptr;
-        MovableObject *actorMo = nullptr;
-        // 遍历结果
-        for (auto &it : result)
-        {
-            const Any &any = it.movable->getUserAny();
-            if (any.isEmpty())
-            {
-                continue;
-            }
-
-            State *state = Ogre::any_cast<State *>(any);
-            if (ActorState *actorPtr = dynamic_cast<ActorState *>(state))
-            {
-                actor = actorPtr;
-                actorMo = it.movable;
-            }
-            break;
-        }
-        sMgr->destroyQuery(rayQuery);
-        if (actor == nullptr)
-        {
-            return;
-        }
-        //
-        actor->afterPick(actorMo);
-        // high light the cell in which the actor stand.
     }
 };

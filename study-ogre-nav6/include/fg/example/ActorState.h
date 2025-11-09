@@ -6,9 +6,10 @@
 #include "fg/util/CostMap.h"
 #include "fg/State.h"
 #include "PathState.h"
+#include "fg/Pickable.h"
 
 using namespace Ogre;
-class ActorState : public State
+class ActorState : public State , public Pickable
 {
     bool active = false;
 
