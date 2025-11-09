@@ -17,12 +17,13 @@
 #include "fg/State.h"
 #include "fg/CostMapControl.h"
 #include "fg/Core.h"
-#include "fg/example/CameraStateControl.h"
-
+#include "fg/core/CameraState.h"
+#include "fg/WorldState.h"
+#include "fg/core/SimpleInputState.h"
 using namespace Ogre;
 using namespace std;
 // root state & control.
-class WorldStateControl :public State, public IWorld
+class WorldStateControl : public WorldState, public IWorld
 {
 protected:
     CellStateControl *cells;
@@ -32,28 +33,32 @@ protected:
 
     std::unordered_map<MarkType, CellMarkStateControl *> markStateControls;
 
-    InputState *inputState;
+    SimpleInputState *inputState;
 
     Core *core;
 
 public:
-    WorldStateControl(CostMap *costMap, Core *core) : costMap(costMap), core(core), State(nullptr)
+    WorldStateControl(CostMap *costMap, Ground *ground, Core *core) : costMap(costMap), core(core), WorldState(ground)
     {
+
         Ogre::Root *root = core->getRoot();
 
         // Create frame listener for main loop
         this->cells = new CellStateControl(costMap, core);
-        this->inputState = new InputState();
-        CameraStateControl *frameListener = new CameraStateControl(this, costMap, core->getCamera(), inputState);
+        
+        this->inputState = new SimpleInputState(core->getCamera(),core->getWindow());
 
-        root->addFrameListener(frameListener);
+        CameraState *cameraState = new CameraState(core->getCamera(), inputState);
+        cameraState->setGround(this->ground);//
+        root->addFrameListener(cameraState);
         markStateControls[MarkType::ACTIVE] = new CellMarkStateControl(costMap, core, MarkType::ACTIVE);
 
         ActorStateControl *actor = new ActorStateControl(this, costMap, core);
 
         root->addFrameListener(actor);
-        MainInputListener *keyHandler = new MainInputListener(this, core, this->inputState);
+        MainInputListener *keyHandler = new MainInputListener(this, core);
         core->getAppContext()->addInputListener(keyHandler);
+        core->getAppContext()->addInputListener(inputState);
     }
 
     CostMap *getCostMap()
@@ -63,7 +68,7 @@ public:
 
     void setTargetByCell(CellKey cKey) override
     {
-        SceneManager * sMgr = core->getSceneManager();
+        SceneManager *sMgr = core->getSceneManager();
         SceneNode *rNode = sMgr->getRootSceneNode();
         State::forEachState(rNode, [cKey](MovableObject *mo, State *s)
                             { s->setTargetByCell(mo, cKey); });
@@ -72,7 +77,7 @@ public:
     void pickActorByRay(Ray &ray) override
     {
         // 创建射线查询对象
-        SceneManager * sMgr = core->getSceneManager();
+        SceneManager *sMgr = core->getSceneManager();
         Ogre::RaySceneQuery *rayQuery = sMgr->createRayQuery(ray);
         rayQuery->setSortByDistance(true);  // 按距离排序（最近的优先）
         rayQuery->setQueryMask(0x00000001); // 与 Entity 的查询掩码匹配

@@ -27,7 +27,7 @@
 #include "fg/util/CameraUtil.h"
 #include "fg/util/Polygon2.h"
 #include "fg/State.h"
-
+#include "fg/Ground.h"
 #include "fg/util/BoolFunctionList.h"
 using namespace Ogre;
 
@@ -40,9 +40,7 @@ private:
     InputState *inputState;
     Ogre::Camera *camera;
     ViewPoint *viewport;
-    Polygon2 *borderOnGround;
-
-    BoolFunctionList<CameraState *> validator;
+    Ground *ground;
 
 public:
     CameraState(Ogre::Camera *camera, InputState *inputState) : quit(false)
@@ -50,30 +48,36 @@ public:
 
         this->camera = camera;
         this->inputState = inputState;
-        this->borderOnGround = nullptr;
-    }
-    void setBorderOnGround(Polygon2 *bog)
-    {
-        this->borderOnGround = bog;
+        this->ground = nullptr;
     }
 
-    bool isViewportInBorderOfGround(Vector3 &position, Quaternion &orientation, Polygon2 *borderOnGround)
+    void setGround(Ground *bog)
     {
+        this->ground = bog;
+    }
 
-        Ogre::Plane ground(Ogre::Vector3::UNIT_Y, 0);
+    // position and orientation of the camera
+    bool isViewportInsideGround(Vector3 &position, Quaternion &orientation)
+    {
+        if (!this->ground)
+        {
+            return true;
+        }
+
+        Ogre::Plane gPlane(Ogre::Vector3::UNIT_Y, 0);
         // Ray ray = state->camera->getCameraToViewportRay(0.5f, 0.5f);
 
         Ogre::Vector3 direction = orientation * Ogre::Vector3::NEGATIVE_UNIT_Z;
         Ogre::Ray ray(position, direction);
         //
-        auto hitGrd = ray.intersects(ground);
+        auto hitGrd = ray.intersects(gPlane);
         if (!hitGrd.first)
         {
             return false;
         }
         Vector3 viewCenterOnGround = ray.getPoint(hitGrd.second);
 
-        return this->borderOnGround->isPointInPolygon(viewCenterOnGround.x, viewCenterOnGround.z);
+        return this->ground->isPointInside(viewCenterOnGround.x, viewCenterOnGround.z);
     }
 
     bool frameStarted(const Ogre::FrameEvent &evt) override
@@ -92,33 +96,30 @@ public:
         float speed = 1000.0f;
         Vector3 position = node->getPosition();
         Vector3 step = Ogre::Vector3::ZERO;
-        if (inputState->front)
+        if (inputState->isFront())
         {
             // node->translate(-back * speed * evt.timeSinceLastFrame);
             step += -back * speed * evt.timeSinceLastFrame;
         }
-        if (inputState->back)
+        if (inputState->isBack())
         {
             step += (back * speed * evt.timeSinceLastFrame);
         }
-        if (inputState->left)
+        if (inputState->isLeft())
         {
             step += (-right * speed * evt.timeSinceLastFrame);
         }
-        if (inputState->right)
+        if (inputState->isRight())
         {
             step += (right * speed * evt.timeSinceLastFrame);
         }
 
         Vector3 position2 = position + step;
         bool validTranlate = true;
-        if (this->borderOnGround)
-        {
 
-            Quaternion orientation = node->getOrientation();
+        Quaternion orientation = node->getOrientation();
+        validTranlate = this->isViewportInsideGround(position2, orientation);
 
-            validTranlate = this->isViewportInBorderOfGround(position2, orientation, this->borderOnGround);
-        }
         if (validTranlate)
         {
             node->translate(step);

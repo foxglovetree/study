@@ -28,7 +28,6 @@
 #include "fg/util/CellMark.h"
 #include "fg/util/CellUtil.h"
 #include "fg/IWorld.h"
-#include "fg/InputState.h"
 
 using namespace OgreBites;
 using namespace Ogre;
@@ -39,17 +38,15 @@ using namespace std;
 class MainInputListener : public OgreBites::InputListener
 {
 private:
-    InputState *inputState;
     IWorld *wsc;
     Core *core;
 
 public:
     MainInputListener(IWorld *wsc,
-                      Core *core, InputState *inputState)
+                      Core *core)
     {
         this->core = core;
         this->wsc = wsc;
-        this->inputState = inputState;
     }
 
     void pickByMouse(int mx, int my)
@@ -120,81 +117,12 @@ public:
         return true;
     }
 
-    bool mouseMoved(const MouseMotionEvent &evt) override
-    {
-        RenderWindow *window = core->getWindow();
-
-        int width = window->getWidth();
-        int height = window->getHeight();
-        // 定义边缘区域（例如：10 像素）
-        int edgeSize = 10;
-        int x = evt.x;
-        int y = evt.y;
-        inputState->left = (x <= edgeSize);
-        inputState->right = (x >= width - edgeSize);
-        inputState->front = (y <= edgeSize);
-        inputState->back = (y >= height - edgeSize);
-        if (inputState->isMoving())
-        {
-            cout << "(" << x << "," << y << "),(" << width << "," << height << ")" << endl;
-            // try pick.
-        }
-        else
-        {
-        }
-        return true;
-    }
     bool mouseWheelRolled(const MouseWheelEvent &evt) override
     {
         Ogre::SceneNode *node = core->getCamera()->getParentSceneNode();
         float speed = 20.0f;
         node->translate(Ogre::Vector3::UNIT_Y * evt.y * speed);
 
-        return true;
-    }
-    bool keyPressed(const OgreBites::KeyboardEvent &evt) override
-    {
-        if (evt.keysym.sym == OgreBites::SDLK_ESCAPE)
-        {
-            Ogre::Root::getSingleton().queueEndRendering();
-        }
-        if (evt.keysym.sym == OgreBites::SDLK_LEFT)
-        {
-            inputState->left = true;
-        }
-        if (evt.keysym.sym == OgreBites::SDLK_RIGHT)
-        {
-            inputState->right = true;
-        }
-        if (evt.keysym.sym == OgreBites::SDLK_UP)
-        {
-            inputState->front = true;
-        }
-        if (evt.keysym.sym == OgreBites::SDLK_DOWN)
-        {
-            inputState->back = true;
-        }
-        return true;
-    }
-    bool keyReleased(const OgreBites::KeyboardEvent &evt) override
-    {
-
-        if (evt.keysym.sym == OgreBites::SDLK_LEFT)
-        {
-            inputState->left = false;
-        }
-        if (evt.keysym.sym == OgreBites::SDLK_RIGHT)
-        {
-            inputState->right = false;
-        }
-        if (evt.keysym.sym == OgreBites::SDLK_UP)
-        {
-            inputState->front = false;
-        }
-        if (evt.keysym.sym == OgreBites::SDLK_DOWN)
-        {
-            inputState->back = false;
-        }
         return true;
     }
 };

@@ -11,6 +11,9 @@ private:
     std::vector<Ogre::Vector2> points;
 
 public:
+    Polygon2()
+    {
+    }
     Polygon2(Vector2 &p1, Vector2 &p2, Vector2 &p3, Vector2 &p4)
     {
         points.push_back(p1);
@@ -23,6 +26,15 @@ public:
         points.push_back(p1);
         points.push_back(p2);
         points.push_back(p3);
+    }
+    void add(float x, float y)
+    {
+        add(Vector2(x, y));
+    }
+
+    void add(Vector2 &p)
+    {
+        points.push_back(p);
     }
 
     Polygon2 &operator*=(const float factor)

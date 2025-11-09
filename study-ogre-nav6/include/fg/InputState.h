@@ -1,16 +1,17 @@
 #pragma once
 
-struct InputState
+class InputState
 {
-    bool left = false;
-    bool right = false;
-    bool front = false;
-    bool back = false;
-    bool up = false;
-    bool down = false;
+public:
+    virtual bool isLeft() { return false; };
+    virtual bool isRight() { return false; };
+    virtual bool isFront() { return false; };
+    virtual bool isBack() { return false; };
+    virtual bool isUp() { return false; };
+    virtual bool isDown() { return false; };
 
     bool isMoving()
     {
-        return left || right || front || back;
+        return isLeft() || isRight() || isFront() || isBack();
     }
 };

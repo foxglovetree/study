@@ -2,6 +2,7 @@
 #include "fg/core/SimpleApp.h"
 #include "fg/Module.h"
 #include "WorldStateControl.h"
+#include "ExampleGround.h"
 class Example
 {
 public:
@@ -43,7 +44,8 @@ public:
             MaterialFactory::createMaterials(core->getMaterialManager());
 
             CostMap *costMap = core->getUserObject<CostMap>("costMap", true);
-            new WorldStateControl(costMap, core);
+            Ground * ground = new ExampleGround(costMap);
+            new WorldStateControl(costMap,ground, core);
         }
     };
 };
