@@ -25,7 +25,7 @@
 #include <OgreTechnique.h>
 #include "fg/util/CostMap.h"
 #include "fg/util/HexGridPrinter.h"
-#include "fg/control/HexGridApp.h"
+#include "fg/core/HexGridApp.h"
 // === Custom hash function ===
 //
 
