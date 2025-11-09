@@ -20,7 +20,7 @@
 #include "fg/core/CameraState.h"
 #include "fg/WorldState.h"
 #include "fg/core/SimpleInputState.h"
-#include "fg/core/ActorClickPicker.h"
+#include "fg/core/MouseClickPicker.h"
 using namespace Ogre;
 using namespace std;
 // root state & control.
@@ -35,7 +35,6 @@ protected:
     std::unordered_map<MarkType, CellMarkStateControl *> markStateControls;
 
     SimpleInputState *inputState;
-
     Core *core;
 
 public:
@@ -52,15 +51,15 @@ public:
         CameraState *cameraState = new CameraState(core->getCamera(), inputState);
         cameraState->setGround(this->ground); //
         root->addFrameListener(cameraState);
+
+
         markStateControls[MarkType::ACTIVE] = new CellMarkStateControl(costMap, core, MarkType::ACTIVE);
-
         ActorStateControl *actor = new ActorStateControl(this, costMap, core);
-
         root->addFrameListener(actor);
         MainInputListener *keyHandler = new MainInputListener(this, core);
         core->getAppContext()->addInputListener(keyHandler);
         core->getAppContext()->addInputListener(inputState);
-        core->getAppContext()->addInputListener(new ActorClickPicker(core->getCamera(), core->getSceneManager(), core->getViewport()));
+        core->getAppContext()->addInputListener(new MouseClickPicker(core->getCamera(), core->getSceneManager(), core->getViewport()));
     }
 
     CostMap *getCostMap()

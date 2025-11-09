@@ -36,14 +36,14 @@ using namespace std;
 // === Custom hash function ===
 //
 // === Input handler for closing application ===
-class ActorClickPicker : public OgreBites::InputListener
+class MouseClickPicker : public OgreBites::InputListener
 {
 private:
     Viewport *viewport;
     Camera *camera;
     SceneManager *sMgr;
 public:
-    ActorClickPicker(Camera *cam, SceneManager *sMgr, Viewport *vp)
+    MouseClickPicker(Camera *cam, SceneManager *sMgr, Viewport *vp)
     {
         this->camera = cam;
         this->sMgr = sMgr;

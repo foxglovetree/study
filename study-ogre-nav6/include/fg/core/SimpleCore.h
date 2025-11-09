@@ -20,7 +20,6 @@ private:
     Ogre::Root *root;
     std::unordered_map<std::string, std::any> userObjs;
     MaterialManager *matMgr;
-
 public:
     SimpleCore()
     {
@@ -81,7 +80,6 @@ public:
         // Create viewport
         vp = window->addViewport(camera);
         vp->setBackgroundColour(Ogre::ColourValue(0.2f, 0.2f, 0.2f));
-
         // Create world state and controls.
     }
 
@@ -90,6 +88,7 @@ public:
     Viewport *getViewport() { return this->vp; }
     Camera *getCamera() { return this->camera; }
     Root *getRoot() { return this->root; };
+    
     RenderWindow *getWindow()
     {
         return this->appCtx->getRenderWindow();
@@ -98,6 +97,8 @@ public:
     {
         return this -> matMgr;
     }
+   
+
 
     void addInputListener(InputListener *listener) override
     {

@@ -9,16 +9,21 @@
 #include "fg/Pickable.h"
 
 using namespace Ogre;
-class ActorState : public State , public Pickable
+class ActorState : public State, public Pickable, public Ogre::FrameListener
 {
+protected:
     bool active = false;
 
     PathFollow2 *pathFolow = nullptr;
     Ogre::Entity *entity;
     CostMap *costMap;
-    PathState * pathState;
+    PathState *pathState;
+
+    SceneNode *node;
+    AnimationState *aniState;
+
 public:
-    ActorState(State *parent, CostMap *costMap, Core*core) : State(parent)
+    ActorState(State *parent, CostMap *costMap, Core *core) : State(parent)
     {
         this->costMap = costMap;
         pathState = new PathState(this, costMap, core);
@@ -31,6 +36,16 @@ public:
     Ogre::Entity *getEntity()
     {
         return this->entity;
+    }
+
+    SceneNode *getNode()
+    {
+        return this->node;
+    }
+
+    void setNode(SceneNode *node)
+    {
+        this->node = node;
     }
 
     void setActive(bool active)
@@ -75,9 +90,9 @@ public:
                 CellKey start;
                 if (this->pathState->getStart(start))
                 {
-                //    markStateControls[MarkType::ACTIVE]->mark(start, false);
+                    //    markStateControls[MarkType::ACTIVE]->mark(start, false);
                     this->pathState->clearPath();
-                 }
+                }
             }
         }
         return true;
@@ -101,6 +116,51 @@ public:
             PathFollow2 *pathFollow = new PathFollow2(aPos2, pathByPosition);
             this->setPath(pathFollow);
             pathState->setPath(pathByKey, aCellKey, cKey2);
+            enableAnimation("RunBase");
+        }
+        return true;
+    }
+
+    bool enableAnimation(std::string name)
+    {
+        aniState = entity->getAnimationState(name);
+        if (aniState)
+        {
+
+            aniState->setEnabled(true);
+            aniState->setLoop(true);   // 循环播放
+            aniState->setWeight(1.0f); // 混合权重（用于多动画混合）
+            return true;
+        }
+        return false;
+    }
+
+    bool frameStarted(const Ogre::FrameEvent &evt) override
+    {
+        if (this->isActive())
+        {
+            PathFollow2 *pathFollow = this->getPath();
+            if (pathFollow != nullptr)
+            {
+                Vector2 pos;
+                if (pathFollow->move(evt.timeSinceLastFrame, pos))
+                {
+                    Vector3 pos0 = node->getPosition();
+                    node->translate(pos.x - pos0.x, 0, pos.y - pos0.z); // new position
+                    // animation
+                    if (aniState)
+                    {
+                        aniState->addTime(evt.timeSinceLastFrame);
+                    }
+                }
+                else
+                {
+                    setPath(nullptr);
+                }
+            }
+        }
+        else
+        {
         }
         return true;
     }
