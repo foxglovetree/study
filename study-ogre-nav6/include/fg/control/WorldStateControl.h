@@ -13,7 +13,6 @@
 #include "fg/core/MainInputListener.h"
 #include "ActorStateControl.h"
 #include "CellStateControl.h"
-#include "PathStateControl.h"
 #include "CellMarkStateControl.h"
 #include "fg/core/WorldState.h"
 #include "fg/core/RootState.h"
@@ -33,7 +32,6 @@ protected:
 
     std::unordered_map<MarkType, CellMarkStateControl *> markStateControls;
 
-    PathStateControl *pathStateControl;
     ActorStateControl *actorStateControl;
     Camera *camera;
     ApplicationContext *app;
@@ -69,8 +67,8 @@ public:
         root->addFrameListener(frameListener);
         markStateControls[MarkType::ACTIVE] = new CellMarkStateControl(costMap, sceneMgr, MarkType::ACTIVE);
 
-        pathStateControl = this->addComponent<PathStateControl>(new PathStateControl());
-        ActorState * actor = new ActorState(this->state, costMap);
+       
+        ActorState * actor = new ActorState(this->state, costMap, sceneMgr);
         this->actorStateControl = this->addComponent<ActorStateControl>(new ActorStateControl(actor));
 
         root->addFrameListener(actorStateControl);

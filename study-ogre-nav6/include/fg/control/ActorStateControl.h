@@ -15,9 +15,11 @@ class ActorStateControl : public Ogre::FrameListener, public StateControl<ActorS
     
     SceneNode *node;
     
+     
 public:
     ActorStateControl(ActorState * actor):StateControl(actor)
     {
+         
     }
     void init(InitContext &ctx) override
     {

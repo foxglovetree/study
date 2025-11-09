@@ -7,10 +7,11 @@
 #include "fg/StateControl.h"
 #include "fg/util/HexGridPrinter.h"
 #include "fg/util/CellMark.h"
+#include "fg/util/StateUtil.h"
 
 using namespace Ogre;
 
-class PathStateControl : public StateControl<State>
+class PathStateControl : public State
 {
     Ogre::ManualObject *pathObject;
     Ogre::SceneNode *pathNode;
@@ -20,19 +21,17 @@ class PathStateControl : public StateControl<State>
     CostMap *costMap;
     CellKey start = CellKey(-1, -1);
     CellKey end = CellKey(-1, -1);
-
+    Ogre::SceneManager *sceneMgr;
 public:
-    PathStateControl() 
+    PathStateControl(State* p, CostMap* costMap, Ogre::SceneManager *sceneMgr) : State(p)
     {
-        // Create path object
-    }
-    void init(InitContext &ctx) override
-    {
-        costMap = this->parent->find<CostMap>();
-        Ogre::SceneManager *sceneMgr = parent->find<Ogre::SceneManager>();
+        this->costMap = costMap;
+        this->sceneMgr = sceneMgr;
+        
         pathObject = sceneMgr->createManualObject("PathObject");
         pathNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
         pathNode->attachObject(pathObject);
+        pathNode->translate(0, 1, 0);
     }
 
     void clearPath()
@@ -85,17 +84,17 @@ public:
                 if (x == start.first && y == start.second)
                 {
                     // Start point in green
-                    drawHexagonTo(pathObject, vertices, Ogre::ColourValue::Green);
+                    StateUtil::drawHexagonTo(pathObject, vertices, Ogre::ColourValue::Green);
                 }
                 else if (x == end.first && y == end.second)
                 {
                     // End point in blue
-                    drawHexagonTo(pathObject, vertices, Ogre::ColourValue::Blue);
+                    StateUtil::drawHexagonTo(pathObject, vertices, Ogre::ColourValue::Blue);
                 }
                 else if (pathSet.find({x, y}) != pathSet.end())
                 {
                     // Path in yellow
-                    drawHexagonTo(pathObject, vertices, Ogre::ColourValue(1.0f, 1.0f, 0.0f)); // Yellow
+                    StateUtil::drawHexagonTo(pathObject, vertices, Ogre::ColourValue(1.0f, 1.0f, 0.0f)); // Yellow
                 }
             }
         }

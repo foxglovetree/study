@@ -4,9 +4,10 @@
 #include "fg/PathFollow2.h"
 #include "fg/util/CellUtil.h"
 #include "fg/util/CostMap.h"
-using namespace Ogre;
 #include "fg/State.h"
+#include "PathStateControl.h"
 
+using namespace Ogre;
 class ActorState : public State
 {
     bool active = false;
@@ -14,11 +15,12 @@ class ActorState : public State
     PathFollow2 *pathFolow = nullptr;
     Ogre::Entity *entity;
     CostMap *costMap;
-
+    PathStateControl * pathState;
 public:
-    ActorState(State *parent, CostMap *costMap) : State(parent)
+    ActorState(State *parent, CostMap *costMap, SceneManager * sMgr) : State(parent)
     {
         this->costMap = costMap;
+        pathState = new PathStateControl(this, costMap, sMgr);
     }
 
     void setEntity(Ogre::Entity *entity)
@@ -70,11 +72,11 @@ public:
                 actor->setActive(false);
                 actor->setPath(nullptr);
                 CellKey start;
-                // if (this->pathStateControl->getStart(start))
-                //{
+                if (this->pathState->getStart(start))
+                {
                 //    markStateControls[MarkType::ACTIVE]->mark(start, false);
-                //    this->pathStateControl->clearPath();
-                // }
+                    this->pathState->clearPath();
+                 }
             }
         }
         return true;
@@ -97,7 +99,7 @@ public:
             CellUtil::translatePathToCellCenter(pathByKey, pathByPosition);
             PathFollow2 *pathFollow = new PathFollow2(aPos2, pathByPosition);
             this->setPath(pathFollow);
-            // pathStateControl->setPath(pathByKey, aCellKey, cKey2);
+            pathState->setPath(pathByKey, aCellKey, cKey2);
         }
         return true;
     }
