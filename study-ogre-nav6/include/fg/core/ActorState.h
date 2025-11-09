@@ -5,7 +5,7 @@
 #include "fg/util/CellUtil.h"
 #include "fg/util/CostMap.h"
 #include "fg/State.h"
-#include "PathStateControl.h"
+#include "PathState.h"
 
 using namespace Ogre;
 class ActorState : public State
@@ -15,12 +15,12 @@ class ActorState : public State
     PathFollow2 *pathFolow = nullptr;
     Ogre::Entity *entity;
     CostMap *costMap;
-    PathStateControl * pathState;
+    PathState * pathState;
 public:
     ActorState(State *parent, CostMap *costMap, SceneManager * sMgr) : State(parent)
     {
         this->costMap = costMap;
-        pathState = new PathStateControl(this, costMap, sMgr);
+        pathState = new PathState(this, costMap, sMgr);
     }
 
     void setEntity(Ogre::Entity *entity)

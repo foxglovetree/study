@@ -9,7 +9,7 @@
 #include "fg/util/Component.h"
 #include "fg/State.h"
 #include "fg/MaterialNames.h"
-#include "fg/util/StateUtil.h"
+#include "fg/util/DrawerUtil.h"
 
 using namespace Ogre;
 // Base class for model data and control.
@@ -29,14 +29,14 @@ public:
                               const std::vector<Ogre::Vector2> &vertices,
                               const Ogre::ColourValue &color1)
     {
-        StateUtil::drawHexagonTo(obj, vertices, color1, color1);
+        DrawerUtil::drawHexagonTo(obj, vertices, color1, color1);
     }
 
     static void drawHexagonTo(Ogre::ManualObject *obj,
                               const std::vector<Ogre::Vector2> &vertices,
                               const Ogre::ColourValue &color1, ColourValue color2)
     {
-        StateUtil::drawHexagonTo(obj, vertices, color1, color2);
+        DrawerUtil::drawHexagonTo(obj, vertices, color1, color2);
     } //
     StateControl()
     {

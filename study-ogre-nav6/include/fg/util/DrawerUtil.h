@@ -4,7 +4,7 @@
 #include <Ogre.h>
 #include <OgreColourValue.h>
 using namespace Ogre;
-class StateUtil
+class DrawerUtil
 {
 public:
     static void drawHexagonTo(Ogre::ManualObject *obj,

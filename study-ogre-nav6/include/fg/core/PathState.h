@@ -7,11 +7,11 @@
 #include "fg/StateControl.h"
 #include "fg/util/HexGridPrinter.h"
 #include "fg/util/CellMark.h"
-#include "fg/util/StateUtil.h"
+#include "fg/util/DrawerUtil.h"
 
 using namespace Ogre;
 
-class PathStateControl : public State
+class PathState : public State
 {
     Ogre::ManualObject *pathObject;
     Ogre::SceneNode *pathNode;
@@ -23,7 +23,7 @@ class PathStateControl : public State
     CellKey end = CellKey(-1, -1);
     Ogre::SceneManager *sceneMgr;
 public:
-    PathStateControl(State* p, CostMap* costMap, Ogre::SceneManager *sceneMgr) : State(p)
+    PathState(State* p, CostMap* costMap, Ogre::SceneManager *sceneMgr) : State(p)
     {
         this->costMap = costMap;
         this->sceneMgr = sceneMgr;
@@ -84,17 +84,17 @@ public:
                 if (x == start.first && y == start.second)
                 {
                     // Start point in green
-                    StateUtil::drawHexagonTo(pathObject, vertices, Ogre::ColourValue::Green);
+                    DrawerUtil::drawHexagonTo(pathObject, vertices, Ogre::ColourValue::Green);
                 }
                 else if (x == end.first && y == end.second)
                 {
                     // End point in blue
-                    StateUtil::drawHexagonTo(pathObject, vertices, Ogre::ColourValue::Blue);
+                    DrawerUtil::drawHexagonTo(pathObject, vertices, Ogre::ColourValue::Blue);
                 }
                 else if (pathSet.find({x, y}) != pathSet.end())
                 {
                     // Path in yellow
-                    StateUtil::drawHexagonTo(pathObject, vertices, Ogre::ColourValue(1.0f, 1.0f, 0.0f)); // Yellow
+                    DrawerUtil::drawHexagonTo(pathObject, vertices, Ogre::ColourValue(1.0f, 1.0f, 0.0f)); // Yellow
                 }
             }
         }
