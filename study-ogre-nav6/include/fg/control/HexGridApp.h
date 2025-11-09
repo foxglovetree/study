@@ -5,10 +5,11 @@
 #include "fg/util/HexGridPrinter.h"
 #include "CameraStateControl.h"
 #include "WorldStateControl.h"
-#include "fg/core/RootState.h"
+#include "fg/CostMapControl.h"
+
 using namespace OgreBites;
 using namespace Ogre;
-class HexGridApp : public Component
+class HexGridApp
 {
 private:
     CameraStateControl *frameListener;
@@ -24,28 +25,16 @@ private:
 
     Ogre::Viewport *vp;
     CostMap *costMap;
-
-    RootState *state;
+    ApplicationContext *appCtx;
 
 public:
     HexGridApp()
     {
-        this->state = new RootState();
+        costMap = new CostMapControl(12, 10);
+        appCtx = new ApplicationContext("HexagonalGridVisualizer");
 
-        this->addComponent<WorldStateControl>(new WorldStateControl(this->state->getWorld()));
-    }
-    ~HexGridApp()
-    {
-    }
-
-    void init(InitContext &ctx) override
-    {
-        ApplicationContext *appCtx = new ApplicationContext("HexagonalGridVisualizer");
         appCtx->initApp();
-        this->state->set(appCtx);
-
-        Ogre::Root *root = this->state->getRoot();
-        this->addObject<ApplicationContext>(appCtx);
+        appCtx->getRoot();
 
         // log level
         LogManager *lm = LogManager::getSingletonPtr();
@@ -57,8 +46,7 @@ public:
 
         RenderWindow *window = appCtx->getRenderWindow();
 
-        Ogre::SceneManager *sceneMgr = root->createSceneManager();
-        this->addObject<Ogre::SceneManager>(sceneMgr);
+        Ogre::SceneManager *sceneMgr = appCtx->getRoot()->createSceneManager();
 
         // Register our scene with the RTSS (Required for proper lighting/shaders)
         Ogre::RTShader::ShaderGenerator *shadergen = Ogre::RTShader::ShaderGenerator::getSingletonPtr();
@@ -73,8 +61,7 @@ public:
         // Create navigation grid and set up example terrain
 
         // Sand: cost 2
-        CostMap *costMap = new CostMap(12, 10);
-        this->addObject<CostMap>(costMap);
+
         // 假设你已经有 sceneMgr 和 camera
         Ogre::Light *light = sceneMgr->createLight("MyPointLight");
         light->setType(Ogre::Light::LT_POINT);
@@ -89,7 +76,6 @@ public:
         camera->setNearClipDistance(0.1f);
         camera->setFarClipDistance(1000.0f);
         camera->setAutoAspectRatio(true);
-        this->addObject<Camera>(camera);
 
         // Create camera node and set position and direction
         cameraNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
@@ -100,24 +86,25 @@ public:
         // Create viewport
         vp = window->addViewport(camera);
         vp->setBackgroundColour(Ogre::ColourValue(0.2f, 0.2f, 0.2f));
-        this->addObject<Viewport>(vp);
+
         // Create materials before buding mesh.
         MaterialFactory::createMaterials();
 
+        new WorldStateControl(costMap, appCtx, sceneMgr, vp, camera);
+
         // Create world state and controls.
-        Component::init(ctx);
     }
 
     void startRendering()
     {
 
-        Ogre::Root *root = this->state->getRoot();
+        Ogre::Root *root = this->appCtx->getRoot();
         root->startRendering();
     }
 
     void close()
     {
         std::cout << "Closing application.\n";
-        state->getAppContext()->closeApp();
+        appCtx->closeApp();
     }
 };

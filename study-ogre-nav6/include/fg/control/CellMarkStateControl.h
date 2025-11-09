@@ -3,17 +3,16 @@
 #include <vector>
 #include <Ogre.h>
 #include <OgreColourValue.h>
-#include "fg/StateControl.h"
+#include "fg/State.h"
 #include "fg/util/CellMark.h"
 #include "fg/MaterialNames.h"
 
 using namespace Ogre;
 
 //
-class CellMarkStateControl :public StateControl<State>
+class CellMarkStateControl : public State
 {
 public:
-
 private:
     Ogre::ManualObject *obj;
     Ogre::SceneNode *node;
@@ -23,7 +22,7 @@ private:
 
 public:
     CellMarkStateControl(CostMap *costMap, Ogre::SceneManager *sceneMgr,
-                         MarkType type) : costMap(costMap), markType(type)
+                         MarkType type) : costMap(costMap), markType(type), State(nullptr)
     {
         obj = sceneMgr->createManualObject();
         node = sceneMgr->getRootSceneNode()->createChildSceneNode();
@@ -33,15 +32,17 @@ public:
     void mark(CellKey key, bool mark)
     {
         bool rt = false;
-        
-        if(mark){
+
+        if (mark)
+        {
             marks.insert(key);
-        } else {
+        }
+        else
+        {
             rt = marks.erase(key);
         }
 
         rebuildMarkMesh();
-        
     }
 
     bool isMarked(CellKey key, MarkType mtyp)

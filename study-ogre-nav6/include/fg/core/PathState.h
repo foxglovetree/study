@@ -4,7 +4,6 @@
 #include <Ogre.h>
 #include <OgreColourValue.h>
 #include "fg/util/CostMap.h"
-#include "fg/StateControl.h"
 #include "fg/util/HexGridPrinter.h"
 #include "fg/util/CellMark.h"
 #include "fg/util/DrawerUtil.h"

@@ -36,7 +36,7 @@ using namespace std;
 // === Custom hash function ===
 //
 // === Input handler for closing application ===
-class MainInputListener : public OgreBites::InputListener, public Component
+class MainInputListener : public OgreBites::InputListener
 {
 private:
     RenderWindow *window;
@@ -47,14 +47,11 @@ private:
 public:
     MainInputListener(IWorld *wsc,
                       RenderWindow *window, Viewport *viewport,
-                      Camera *camera) : window(window),
+                      Camera *camera, InputState* inputState) : window(window),
                                         viewport(viewport), camera(camera)
     {
-        this->wsc = wsc;
-    };
-    void init(InitContext &ctx) override
-    {
-        this->inputState = parent->find<InputState>();
+        this->wsc = wsc;    
+        this->inputState = inputState;
     }
 
     void pickByMouse(int mx, int my)

@@ -2,36 +2,31 @@
 #include <Ogre.h>
 #include <OgreSceneManager.h>
 #include "fg/State.h"
-#include "fg/StateControl.h"
 #include "fg/core/ActorState.h"
 #define CHAR_HEIGHT 5
 #define SCALE 2.0f
 using namespace Ogre;
 
-class ActorStateControl : public Ogre::FrameListener, public StateControl<ActorState>
+class ActorStateControl : public Ogre::FrameListener, public ActorState
 {
     Entity *obj;
     CostMap *costMap;
     
     SceneNode *node;
     
-     
+    SceneManager * sMgr;
+
 public:
-    ActorStateControl(ActorState * actor):StateControl(actor)
-    {
-         
-    }
-    void init(InitContext &ctx) override
-    {
-        CostMap *costMap = this->find<CostMap>();
-        SceneManager *sceneMgr = this->find<Ogre::SceneManager>();
-        obj = sceneMgr->createEntity("Sinbad.mesh");
+    ActorStateControl(State *parent, CostMap *costMap, SceneManager * sMgr):ActorState(parent, costMap, sMgr)
+    {       
+        
+        obj = sMgr->createEntity("Sinbad.mesh");
         obj->setQueryFlags(0x00000001);
 
-        obj->setUserAny(Any((State*)state));
-        this->state->setEntity(obj);
+        obj->setUserAny(Any((State*)this));
+        this->setEntity(obj);
         
-        node = sceneMgr->getRootSceneNode()->createChildSceneNode(Vector3::UNIT_Y * CHAR_HEIGHT * SCALE);
+        node = sMgr->getRootSceneNode()->createChildSceneNode(Vector3::UNIT_Y * CHAR_HEIGHT * SCALE);
         node->setScale(SCALE, SCALE, SCALE);
         node->attachObject(obj);
     }
@@ -43,9 +38,9 @@ public:
     }
     bool frameStarted(const Ogre::FrameEvent &evt) override
     {
-        if (this->state->isActive())
+        if (this->isActive())
         {
-            PathFollow2 *pathFollow = this->state->getPath();
+            PathFollow2 *pathFollow = this->getPath();
             if (pathFollow != nullptr)
             {
                 Vector2 pos;
@@ -56,7 +51,7 @@ public:
                 }
                 else
                 {
-                    state->setPath(nullptr);
+                    setPath(nullptr);
                 }
             }
         }

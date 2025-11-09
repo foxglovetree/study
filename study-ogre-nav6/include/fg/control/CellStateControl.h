@@ -3,11 +3,12 @@
 #include <vector>
 #include <Ogre.h>
 #include <OgreColourValue.h>
-#include "fg/StateControl.h"
+#include "fg/util/DrawerUtil.h"
+
 using namespace Ogre;
 
 //
-class CellStateControl : public StateControl<State>
+class CellStateControl : public State
 {
 public:
 private:
@@ -16,20 +17,15 @@ private:
     CostMap *costMap;
 
 public:
-    CellStateControl() 
+    CellStateControl(CostMap *costMap, Ogre::SceneManager *sceneMgr) : State(nullptr)
     {
-    }
-    void init(InitContext &ctx) override
-    {
-        costMap = this->find<CostMap>();
-        Ogre::SceneManager *sceneMgr = parent->find<Ogre::SceneManager>();
 
+        this->costMap = costMap;
         obj = sceneMgr->createManualObject();
         node = sceneMgr->getRootSceneNode()->createChildSceneNode();
         node->attachObject(obj);
         //
         buildCellMesh();
-        StateControl::init(ctx);
     }
 
     void buildCellMesh()
@@ -48,7 +44,7 @@ public:
                 int cost = costMap->getCost(x, y);
                 Ogre::ColourValue color = getCostColor(cost);
                 auto vertices = CostMap::calculateVerticesForXZ(x, y, CostMap::hexSize);
-                StateControl::drawHexagonTo(obj, vertices, color);
+                DrawerUtil::drawHexagonTo(obj, vertices, color);
             }
         }
 

@@ -25,15 +25,15 @@
 #include <OgreTechnique.h>
 #include "fg/util/CostMap.h"
 
-#include "fg/StateControl.h"
 #include "fg/InputState.h"
 #include "fg/util/CameraUtil.h"
 #include "fg/util/Polygon2.h"
+#include "fg/State.h"
 
 using namespace Ogre;
 
 // === Frame Listener class for main loop ===
-class CameraStateControl : public Ogre::FrameListener, public StateControl<State>
+class CameraStateControl : public Ogre::FrameListener, public State
 {
 private:
     bool quit;
@@ -44,16 +44,12 @@ private:
     CostMap *costMap;
 
 public:
-    CameraStateControl() : quit(false)
+    CameraStateControl(State *parent, CostMap *costMap, Ogre::Camera *camera, InputState *inputState) : quit(false), State(parent)
     {
-    }
-    void init(InitContext&ctx) override
-    {
-
         //
-        this->costMap = this->parent->find<CostMap>();
-        this->camera = this->parent->find<Ogre::Camera>();
-        this->inputState = this->parent->find<InputState>();
+        this->costMap = costMap;
+        this->camera = camera;
+        this->inputState = inputState;
     }
 
     bool checkViewportInBorderOfGround()
