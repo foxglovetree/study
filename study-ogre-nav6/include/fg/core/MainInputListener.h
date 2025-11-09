@@ -39,24 +39,25 @@ using namespace std;
 class MainInputListener : public OgreBites::InputListener
 {
 private:
-    RenderWindow *window;
-    Viewport *viewport;
-    Camera *camera;
     InputState *inputState;
-    IWorld * wsc;
+    IWorld *wsc;
+    Core *core;
+
 public:
     MainInputListener(IWorld *wsc,
-                      RenderWindow *window, Viewport *viewport,
-                      Camera *camera, InputState* inputState) : window(window),
-                                        viewport(viewport), camera(camera)
+                      Core *core, InputState *inputState)
     {
-        this->wsc = wsc;    
+        this->core = core;
+        this->wsc = wsc;
         this->inputState = inputState;
     }
 
     void pickByMouse(int mx, int my)
     {
         // normalized (0,1)
+        Viewport *viewport = core->getViewport();
+        Camera *camera = core->getCamera();
+
         float ndcX = mx / (float)viewport->getActualWidth();
         float ndcY = my / (float)viewport->getActualHeight();
         Ogre::Ray ray = camera->getCameraToViewportRay(ndcX, ndcY);
@@ -83,6 +84,9 @@ public:
     void setTargetByMouse(int mx, int my)
     {
         // normalized (0,1)
+        Viewport *viewport = core->getViewport();
+        Camera *camera = core->getCamera();
+
         float ndcX = mx / (float)viewport->getActualWidth();
         float ndcY = my / (float)viewport->getActualHeight();
 
@@ -118,6 +122,8 @@ public:
 
     bool mouseMoved(const MouseMotionEvent &evt) override
     {
+        RenderWindow *window = core->getWindow();
+
         int width = window->getWidth();
         int height = window->getHeight();
         // 定义边缘区域（例如：10 像素）
@@ -140,7 +146,7 @@ public:
     }
     bool mouseWheelRolled(const MouseWheelEvent &evt) override
     {
-        Ogre::SceneNode *node = camera->getParentSceneNode();
+        Ogre::SceneNode *node = core->getCamera()->getParentSceneNode();
         float speed = 20.0f;
         node->translate(Ogre::Vector3::UNIT_Y * evt.y * speed);
 

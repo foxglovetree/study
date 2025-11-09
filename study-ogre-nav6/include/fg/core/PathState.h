@@ -20,13 +20,14 @@ class PathState : public State
     CostMap *costMap;
     CellKey start = CellKey(-1, -1);
     CellKey end = CellKey(-1, -1);
-    Ogre::SceneManager *sceneMgr;
+
+    Core* core;
 public:
-    PathState(State* p, CostMap* costMap, Ogre::SceneManager *sceneMgr) : State(p)
+    PathState(State* p, CostMap* costMap, Core*core) : State(p)
     {
         this->costMap = costMap;
-        this->sceneMgr = sceneMgr;
-        
+
+        Ogre::SceneManager *sceneMgr = core->getSceneManager();
         pathObject = sceneMgr->createManualObject("PathObject");
         pathNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
         pathNode->attachObject(pathObject);

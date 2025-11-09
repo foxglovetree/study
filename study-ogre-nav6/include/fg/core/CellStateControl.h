@@ -4,6 +4,9 @@
 #include <Ogre.h>
 #include <OgreColourValue.h>
 #include "fg/util/DrawerUtil.h"
+#include "fg/State.h"
+#include "fg/Core.h"
+#include "fg/util/CostMap.h"
 
 using namespace Ogre;
 
@@ -17,9 +20,9 @@ private:
     CostMap *costMap;
 
 public:
-    CellStateControl(CostMap *costMap, Ogre::SceneManager *sceneMgr) : State(nullptr)
+    CellStateControl(CostMap *costMap, Core *core) : State(nullptr)
     {
-
+        Ogre::SceneManager *sceneMgr = core->getSceneManager();
         this->costMap = costMap;
         obj = sceneMgr->createManualObject();
         node = sceneMgr->getRootSceneNode()->createChildSceneNode();

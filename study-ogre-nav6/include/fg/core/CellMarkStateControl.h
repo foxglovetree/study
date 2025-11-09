@@ -6,7 +6,7 @@
 #include "fg/State.h"
 #include "fg/util/CellMark.h"
 #include "fg/MaterialNames.h"
-
+#include "fg/Core.h"
 using namespace Ogre;
 
 //
@@ -21,11 +21,11 @@ private:
     std::unordered_set<CellKey, PairHash> marks;
 
 public:
-    CellMarkStateControl(CostMap *costMap, Ogre::SceneManager *sceneMgr,
+    CellMarkStateControl(CostMap *costMap, Core* core,
                          MarkType type) : costMap(costMap), markType(type), State(nullptr)
     {
-        obj = sceneMgr->createManualObject();
-        node = sceneMgr->getRootSceneNode()->createChildSceneNode();
+        obj = core->getSceneManager()->createManualObject();
+        node = core->getSceneManager()->getRootSceneNode()->createChildSceneNode();
         node->attachObject(obj);
     }
 

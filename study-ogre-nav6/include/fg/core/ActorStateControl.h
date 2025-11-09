@@ -3,6 +3,7 @@
 #include <OgreSceneManager.h>
 #include "fg/State.h"
 #include "fg/core/ActorState.h"
+#include "fg/Core.h"
 #define CHAR_HEIGHT 5
 #define SCALE 2.0f
 using namespace Ogre;
@@ -14,12 +15,12 @@ class ActorStateControl : public Ogre::FrameListener, public ActorState
     
     SceneNode *node;
     
-    SceneManager * sMgr;
-
-public:
-    ActorStateControl(State *parent, CostMap *costMap, SceneManager * sMgr):ActorState(parent, costMap, sMgr)
+    
+    public:
+    ActorStateControl(State *parent, CostMap *costMap, Core* core):ActorState(parent, costMap, core)
     {       
         
+        SceneManager * sMgr = core->getSceneManager();
         obj = sMgr->createEntity("Sinbad.mesh");
         obj->setQueryFlags(0x00000001);
 

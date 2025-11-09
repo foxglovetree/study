@@ -17,10 +17,10 @@ class ActorState : public State
     CostMap *costMap;
     PathState * pathState;
 public:
-    ActorState(State *parent, CostMap *costMap, SceneManager * sMgr) : State(parent)
+    ActorState(State *parent, CostMap *costMap, Core*core) : State(parent)
     {
         this->costMap = costMap;
-        pathState = new PathState(this, costMap, sMgr);
+        pathState = new PathState(this, costMap, core);
     }
 
     void setEntity(Ogre::Entity *entity)
