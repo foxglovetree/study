@@ -1,21 +1,21 @@
 #pragma once
 #include <OgreApplicationContext.h>
 #include <OgreLogManager.h>
-#include "fg/core/MaterialFactory.h"
+#include "fg/example/MaterialFactory.h"
 #include "fg/util/HexGridPrinter.h"
-#include "CameraStateControl.h"
 #include "fg/CostMapControl.h"
 #include "fg/Module.h"
-#include "fg/Application.h"
+#include "fg/App.h"
 #include "fg/core/SimpleCore.h"
 
 using namespace OgreBites;
 using namespace Ogre;
-class SimpleApp : public Application
+class SimpleApp : public App
 {
 private:
     Core *core;
     std::vector<Module *> list;
+    std::unordered_map<std::string, Module *> map;
 
 public:
     SimpleApp()
@@ -25,6 +25,13 @@ public:
 
     void add(Module *mod) override
     {
+
+        std::string name = mod->getName();
+        if (map.find(name) != map.end())
+        {
+            throw std::runtime_error("Module already exists:" + name);
+        }
+        map[name] = mod;
         list.push_back(mod);
     }
 

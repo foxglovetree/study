@@ -2,7 +2,7 @@
 #include <Ogre.h>
 #include <OgreSceneManager.h>
 #include "fg/State.h"
-#include "fg/core/ActorState.h"
+#include "fg/example/ActorState.h"
 #include "fg/Core.h"
 #define CHAR_HEIGHT 5
 #define SCALE 2.0f

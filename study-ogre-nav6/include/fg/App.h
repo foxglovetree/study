@@ -1,7 +1,7 @@
 #pragma once
 #include "Module.h"
 
-class Application
+class App
 {
 public:
     virtual void add(Module *mod) = 0;

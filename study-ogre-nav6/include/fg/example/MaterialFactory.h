@@ -36,12 +36,12 @@ class MaterialFactory
 {
 private:
     // 在你的 HexMapVisualizer 构造函数或初始化函数中调用
-    static Ogre::MaterialPtr createVertexColourMaterialForSelected()
+    static Ogre::MaterialPtr createVertexColourMaterialForSelected(MaterialManager * matMgr)
     {
         using namespace Ogre;
 
         // 创建材质，名称和资源组
-        MaterialPtr mat = MaterialManager::getSingleton().create(MaterialNames::materialNameSelected, "General");
+        MaterialPtr mat = matMgr->create(MaterialNames::materialNameSelected, "General");
 
         // 禁用阴影接收
         mat->setReceiveShadows(false);
@@ -61,12 +61,12 @@ private:
         pass->setDepthBias(1.0f, 0.0f);
         return mat;
     }
-    static Ogre::MaterialPtr createVertexColourMaterial()
+    static Ogre::MaterialPtr createVertexColourMaterial(MaterialManager * matMgr)
     {
         using namespace Ogre;
 
         // 创建材质，名称和资源组
-        MaterialPtr mat = MaterialManager::getSingleton().create(MaterialNames::materialNameToCreate, "General");
+        MaterialPtr mat = matMgr->create(MaterialNames::materialNameToCreate, "General");
 
         // 禁用阴影接收
         mat->setReceiveShadows(false);
@@ -89,13 +89,13 @@ private:
     }
 
 public:
-    static void createMaterials()
+    static void createMaterials(MaterialManager * matMgr)
     {
         //
         // Create hexagonal grid object
 
         //
-        createVertexColourMaterial();
-        createVertexColourMaterialForSelected(); // for selected
+        createVertexColourMaterial(matMgr);
+        createVertexColourMaterialForSelected(matMgr); // for selected
     }
 };

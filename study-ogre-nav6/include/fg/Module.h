@@ -9,7 +9,6 @@ class Module
 {
 protected:
 public:
-    virtual void active(Core *core)
-    {
-    }
+    virtual std::string getName() = 0;
+    virtual void active(Core *core) = 0;
 };

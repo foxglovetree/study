@@ -45,7 +45,9 @@ int main()
 
         // Initialize Ogre application context
         auto app = std::make_unique<SimpleApp>();
-        app->add(new Example());
+        app->add(new Example::CostMapMod());
+        app->add(new Example::WorldStateMod());
+        
         app->setup();
         app->startRendering();
         app->close();

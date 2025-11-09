@@ -25,8 +25,9 @@ public:
             func(mo, s);
         }
 
-        if(!recursive){
-            return ;
+        if (!recursive)
+        {
+            return;
         }
 
         auto cMap = node->getChildren();
@@ -63,19 +64,17 @@ public:
         this->parent = parent;
     }
 
-    virtual Ogre::Root *getRoot()
+    State()
     {
-        if (this->parent)
-        {
-            return this->parent->getRoot();
-        }
-        return nullptr;
+        this->parent = nullptr;
     }
+
     virtual bool afterPick(MovableObject *mo)
     {
         return false;
     };
-    virtual bool setTargetByCell(MovableObject *mo, CellKey cKey2) {
+    virtual bool setTargetByCell(MovableObject *mo, CellKey cKey2)
+    {
         return false;
     }
 

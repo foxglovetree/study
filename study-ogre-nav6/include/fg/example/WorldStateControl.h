@@ -10,20 +10,19 @@
 #include "fg/util/CellUtil.h"
 #include "fg/State.h"
 #include "fg/IWorld.h"
-#include "fg/core/MainInputListener.h"
+#include "fg/example/MainInputListener.h"
 #include "ActorStateControl.h"
 #include "CellStateControl.h"
 #include "CellMarkStateControl.h"
-#include "fg/core/WorldState.h"
 #include "fg/State.h"
 #include "fg/CostMapControl.h"
 #include "fg/Core.h"
-#include "fg/core/CameraStateControl.h"
+#include "fg/example/CameraStateControl.h"
 
 using namespace Ogre;
 using namespace std;
 // root state & control.
-class WorldStateControl : public WorldState, public IWorld
+class WorldStateControl :public State, public IWorld
 {
 protected:
     CellStateControl *cells;
@@ -38,7 +37,7 @@ protected:
     Core *core;
 
 public:
-    WorldStateControl(CostMap *costMap, Core *core) : costMap(costMap), core(core), WorldState(nullptr)
+    WorldStateControl(CostMap *costMap, Core *core) : costMap(costMap), core(core), State(nullptr)
     {
         Ogre::Root *root = core->getRoot();
 

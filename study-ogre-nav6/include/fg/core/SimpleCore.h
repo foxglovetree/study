@@ -1,32 +1,25 @@
 #pragma once
 #include <OgreApplicationContext.h>
 #include <OgreLogManager.h>
-#include "fg/core/MaterialFactory.h"
+#include <OgreMaterialManager.h>
+
 #include "fg/util/HexGridPrinter.h"
-#include "CameraStateControl.h"
-#include "WorldStateControl.h"
 #include "fg/CostMapControl.h"
 #include "fg/Module.h"
-
+#include <unordered_map>
 using namespace OgreBites;
 using namespace Ogre;
 class SimpleCore : public Core
 {
 private:
-    CameraStateControl *frameListener;
     Ogre::Camera *camera;
     Ogre::SceneNode *cameraNode;
-
-    Ogre::ManualObject *hexGridObject;
-
-    Ogre::SceneNode *gridNode;
-    Ogre::SceneNode *pathNode;
-
     Ogre::Viewport *vp;
-    CostMap *costMap;
     ApplicationContext *appCtx;
     Ogre::SceneManager *sceMgr;
-    Ogre::Root * root;
+    Ogre::Root *root;
+    std::unordered_map<std::string, std::any> userObjs;
+    MaterialManager *matMgr;
 
 public:
     SimpleCore()
@@ -35,6 +28,7 @@ public:
         appCtx = new ApplicationContext("HexagonalGridVisualizer");
 
         appCtx->initApp();
+        this->matMgr = MaterialManager::getSingletonPtr();
         this->root = appCtx->getRoot();
 
         // log level
@@ -88,9 +82,6 @@ public:
         vp = window->addViewport(camera);
         vp->setBackgroundColour(Ogre::ColourValue(0.2f, 0.2f, 0.2f));
 
-        // Create materials before buding mesh.
-        MaterialFactory::createMaterials();
-
         // Create world state and controls.
     }
 
@@ -98,9 +89,14 @@ public:
     SceneManager *getSceneManager() { return this->sceMgr; }
     Viewport *getViewport() { return this->vp; }
     Camera *getCamera() { return this->camera; }
-    Root * getRoot(){return this->root;};
-    RenderWindow * getWindow(){
+    Root *getRoot() { return this->root; };
+    RenderWindow *getWindow()
+    {
         return this->appCtx->getRenderWindow();
+    }
+    MaterialManager *getMaterialManager() override
+    {
+        return this -> matMgr;
     }
 
     void addInputListener(InputListener *listener) override
@@ -111,5 +107,21 @@ public:
     {
 
         this->root->addFrameListener(listener);
+    }
+
+    void setUserObject(const std::string key, std::any value) override
+    {
+        this->userObjs[key] = value;
+    }
+
+    bool getUserObject(const std::string key, std::any &value) override
+    {
+        std::unordered_map<std::string, std::any>::iterator it = userObjs.find(key);
+        if (it != userObjs.end())
+        {
+            value = it->second;
+            return true;
+        }
+        return false;
     }
 };
