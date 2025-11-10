@@ -8,8 +8,12 @@ protected:
     Polygon2 polygon;
 
 public:
-    bool isPointInside(float x, float z) override
+    bool isPointInside(Vector2 &p) override
     {
-        return polygon.isPointInPolygon(x, z);
+        return isPointInside(p.x, p.y);
+    }
+    bool isPointInside(float x, float y) override
+    {
+        return polygon.isPointInPolygon(x, y);
     }
 };

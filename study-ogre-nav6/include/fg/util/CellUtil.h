@@ -3,6 +3,7 @@
 #include <vector>
 #include <Ogre.h>
 #include "CostMap.h"
+#include "fg/Ground.h"
 
 class CellUtil
 {
@@ -12,15 +13,19 @@ public:
         for (int i = 0; i < pathByKey.size(); i++)
         {
             auto p = pathByKey[i];
-            auto center = CostMap::calculateCenterForXZ(static_cast<int>(p.x), static_cast<int>(p.y), CostMap::hexSize);
-            pathByPosition[i] = Vector2(center.x, center.z);
+            //auto center = CostMap::calculateCenterForXZ(static_cast<int>(p.x), static_cast<int>(p.y), CostMap::hexSize);
+            auto center = Ground::calculateCenter(static_cast<int>(p.x), static_cast<int>(p.y), CostMap::hexSize);
+            
+            pathByPosition[i] = Vector2(center.x, center.y);
         }
     }
-
-    static bool findCellByPoint(CostMap *costMap, Vector3 point, CellKey &cKey)
+    /*
+    static bool findCellByPointDEL(CostMap *costMap, Vector3 point, CellKey &cKey)
     {
         return findCellByPoint(costMap, point.x, point.z, cKey.first, cKey.second);
     }
+    */
+
 
     static bool findCellByPoint(CostMap *costMap, Vector2 point, CellKey &cKey)
     {
@@ -48,7 +53,8 @@ public:
     }
     static bool isPointInCell(float px, float py, int cx, int cy)
     {
-        auto corners = CostMap::calculateVerticesForXZ(cx, cy, CostMap::hexSize);
+        //auto corners = CostMap::calculateVerticesForXZ(cx, cy, CostMap::hexSize);
+        auto corners = Ground::calculateVertices(cx, cy, CostMap::hexSize);
 
         // 叉积判断是否在所有边的左侧
         for (int i = 0; i < 6; ++i)

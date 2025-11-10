@@ -44,15 +44,16 @@ public:
         {
             PathFollow2 *pathFollow = this->getPath();
 
-            Vector2 currentPos;
-            Vector2 direction;
-            if (pathFollow->move(evt.timeSinceLastFrame, currentPos, direction))
+            Vector2 currentPos2D;
+            Vector2 direction2D;
+            if (pathFollow->move(evt.timeSinceLastFrame, currentPos2D, direction2D))
             {
 
                 //
                 Vector3 prevPos = pNode->getPosition();
+                Vector3 currentPos = Ground::to3D(currentPos2D);
 
-                pNode->translate(currentPos.x - prevPos.x, 0, currentPos.y - prevPos.z); // new position
+                pNode->translate(currentPos - prevPos); // new position
                 // animation
                 AnimationStateIterator it = this->aniSet->getAnimationStateIterator();
                 while (it.hasMoreElements())
@@ -61,10 +62,11 @@ public:
                     as->addTime(evt.timeSinceLastFrame);
                 }
 
-                float angle = atan2(-direction.y, direction.x) + Ogre::Math::HALF_PI; // 因为 next.y 对应 Z
+                //float angle = atan2(-direction.y, direction.x) + Ogre::Math::HALF_PI; // 因为 next.y 对应 Z
 
-                Quaternion orientation = Quaternion(Radian(angle), Vector3::UNIT_Y);
-                pNode->setOrientation(orientation);
+                //Quaternion orientation = Quaternion(Radian(angle), Vector3::UNIT_Y);
+
+                //pNode->setOrientation(orientation);
                 // pNode->setOrientation(Quaternion(Degree(90), Vector3::UNIT_Y));
                 //  update direction
                 //

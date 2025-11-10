@@ -42,6 +42,7 @@ private:
     Viewport *viewport;
     Camera *camera;
     SceneManager *sMgr;
+
 public:
     MouseClickPicker(Camera *cam, SceneManager *sMgr, Viewport *vp)
     {
@@ -64,8 +65,7 @@ public:
         return pick(ray);
     }
 
-    
-    bool pick(Ray &ray) 
+    bool pick(Ray &ray)
     {
         // 创建射线查询对象
         Ogre::RaySceneQuery *rayQuery = sMgr->createRayQuery(ray);
@@ -80,16 +80,20 @@ public:
         // 遍历结果
         for (auto &it : result)
         {
-            Node * node = it.movable->getParentNode();
+            Node *node = it.movable->getParentNode();
             State *s = State::get(node);
-            Pickable * p = s->getPickable();
-
-            if (p)
+            if (s)
             {
-                picked = p;
-                actorMo = it.movable;
+
+                Pickable *p = s->getPickable();
+
+                if (p)
+                {
+                    picked = p;
+                    actorMo = it.movable;
+                    break;
+                }
             }
-            break;
         }
         sMgr->destroyQuery(rayQuery);
         if (!picked)
@@ -100,6 +104,4 @@ public:
         return picked->afterPick(actorMo);
         // high light the cell in which the actor stand.
     }
-
-
 };

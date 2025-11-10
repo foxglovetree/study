@@ -8,21 +8,21 @@ class DrawerUtil
 {
 public:
     static void drawHexagonTo(Ogre::ManualObject *obj,
-                              const std::vector<Ogre::Vector2> &vertices,
+                              const std::vector<Ogre::Vector3> &vertices,
                               const Ogre::ColourValue &color1)
     {
         drawHexagonTo(obj, vertices, color1, color1);
     }
 
     static void drawHexagonTo(Ogre::ManualObject *obj,
-                              const std::vector<Ogre::Vector2> &vertices,
+                              const std::vector<Ogre::Vector3> &vertices,
                               const Ogre::ColourValue &color1, ColourValue color2)
     {
         const float nomX = 0;
         const float nomY = 1;
         const float nomZ = 0;
         // Compute center
-        Ogre::Vector2 center(0, 0);
+        Ogre::Vector3 center(0,0, 0);
         for (auto &v : vertices)
             center += v;
         center *= (1.0f / 6.0f);
@@ -30,14 +30,14 @@ public:
         size_t baseIndex = obj->getCurrentVertexCount();
 
         // Center
-        obj->position(center.x, 0, center.y);
+        obj->position(center.x, center.y, center.z);
         obj->normal(nomX, nomY, nomZ);
         obj->colour(color1);
 
         // Corners
         for (int i = 0; i < 6; ++i)
         {
-            obj->position(vertices[i].x, 0, vertices[i].y);
+            obj->position(vertices[i].x, vertices[i].y, vertices[i].z);
             obj->normal(nomX, nomY, nomZ);
             obj->colour(color2);
         }

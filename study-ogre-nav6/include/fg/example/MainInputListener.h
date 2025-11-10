@@ -82,7 +82,10 @@ public:
 
             CellKey cKey;
             CostMap *costMap = this->wsc->getCostMap();
-            bool hitCell = CellUtil::findCellByPoint(costMap, Vector2(pos.x, pos.z), cKey);
+
+            //bool hitCell = CellUtil::findCellByPoint(costMap, Vector2(pos.x, pos.z), cKey);
+            bool hitCell = CellUtil::findCellByPoint(costMap, Ground::to2D(pos), cKey);
+            
             if (hitCell)
             {
 

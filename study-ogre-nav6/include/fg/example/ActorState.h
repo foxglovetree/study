@@ -66,7 +66,7 @@ public:
         const Vector3 &pos = node->getPosition();
         cout << "actor.pos:" << pos << "" << endl;
         CellKey cKey;
-        bool hitCell = CellUtil::findCellByPoint(costMap, pos, cKey);
+        bool hitCell = CellUtil::findCellByPoint(costMap, Ground::to2D(pos), cKey);
         ActorState *actor = this;
         if (hitCell)
         {
@@ -99,7 +99,7 @@ public:
         }
         //check if this state's position on the target cell
         Vector3 aPos3 = this->node->getPosition();
-        Vector2 aPos2(aPos3.x, aPos3.z);
+        Vector2 aPos2 = Ground::to2D(aPos3);
         CellKey aCellKey;
         bool hitCell = CellUtil::findCellByPoint(costMap, aPos2, aCellKey);
         if (hitCell)

@@ -45,7 +45,7 @@ struct NavNode
     bool operator>(const NavNode &other) const { return f() > other.f(); }
 };
 
-class CostMap 
+class CostMap
 {
 public:
     static constexpr float hexSize = 30.0f; // inner radius
@@ -223,18 +223,19 @@ public:
     int getWidth() const { return width; }
     int getHeight() const { return height; }
 
+private:
     // Get hexagon vertices
     // anti-clockwise
-    static std::vector<Ogre::Vector2> calculateVerticesForXZ(float rad, float scale = 1.0f)
+    static std::vector<Ogre::Vector2> calculateVerticesForXZ_DEL(float rad, float scale = 1.0f)
     {
-        return calculateVerticesForXZ(0, 0, rad, scale);
+        return calculateVerticesForXZ_DEL(0, 0, rad, scale);
     }
 
-    static std::vector<Ogre::Vector2> calculateVerticesForXZ(int x, int z, float rad, float scale = 1.0f)
+    static std::vector<Ogre::Vector2> calculateVerticesForXZ_DEL(int x, int z, float rad, float scale = 1.0f)
     {
         std::vector<Ogre::Vector2> vertices(6);
 
-        Ogre::Vector3 center = calculateCenterForXZ(x, z, rad);
+        Ogre::Vector3 center = calculateCenterForXZ_DEL(x, z, rad);
 
         float RAD = scale * 2 * rad / std::sqrt(3.0f);
 
@@ -250,7 +251,7 @@ public:
         return vertices;
     }
 
-    static Ogre::Vector3 calculateCenterForXZ(int x, int z, float rad = CostMap::hexSize)
+    static Ogre::Vector3 calculateCenterForXZ_DEL(int x, int z, float rad = CostMap::hexSize)
     {
         float centerX = x * 2 * rad + (z % 2 == 0 ? 0 : rad);
         float centerZ = z * rad * std::sqrt(3.0f);

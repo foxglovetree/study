@@ -79,7 +79,8 @@ public:
         {
             for (int x = 0; x < width; x++)
             {
-                auto vertices = CostMap::calculateVerticesForXZ(x, y, CostMap::hexSize);
+                //auto vertices = CostMap::calculateVerticesForXZ(x, y, CostMap::hexSize);
+                auto vertices = Ground::calculateVertices3D(x, y, CostMap::hexSize);
 
                 if (x == start.first && y == start.second)
                 {

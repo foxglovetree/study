@@ -46,7 +46,9 @@ public:
             {
                 int cost = costMap->getCost(x, y);
                 Ogre::ColourValue color = getCostColor(cost);
-                auto vertices = CostMap::calculateVerticesForXZ(x, y, CostMap::hexSize);
+                //auto vertices = CostMap::calculateVerticesForXZ(x, y, CostMap::hexSize);
+                auto vertices = Ground::calculateVertices3D(x, y, CostMap::hexSize);
+                
                 DrawerUtil::drawHexagonTo(obj, vertices, color);
             }
         }
@@ -74,8 +76,8 @@ public:
     }
 
     void drawHexagonRing(Ogre::ManualObject *obj,
-                         const std::vector<Ogre::Vector2> &verticesInner,
-                         const std::vector<Ogre::Vector2> &verticesOuter,
+                         const std::vector<Ogre::Vector3> &verticesInner,
+                         const std::vector<Ogre::Vector3> &verticesOuter,
                          const Ogre::ColourValue &colorInner,
                          Ogre::ColourValue &colorOuter)
     {
@@ -86,11 +88,11 @@ public:
         for (int i = 0; i < 6; i++)
         {
 
-            obj->position(verticesInner[i].x, 0, verticesInner[i].y);
+            obj->position(verticesInner[i]);
             obj->normal(nomX, nomY, nomZ);
             obj->colour(colorInner);
 
-            obj->position(verticesOuter[i].x, 0, verticesOuter[i].y);
+            obj->position(verticesOuter[i]);
             obj->normal(nomX, nomY, nomZ);
             obj->colour(colorOuter);
         }

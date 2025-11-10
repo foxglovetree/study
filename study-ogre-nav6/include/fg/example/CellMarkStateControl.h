@@ -58,8 +58,11 @@ public:
         {
             int cx = key.first;
             int cy = key.second;
-            auto verticesInner = CostMap::calculateVerticesForXZ(cx, cy, CostMap::hexSize, 0.75f);
-            auto verticesOuter = CostMap::calculateVerticesForXZ(cx, cy, CostMap::hexSize, 0.95f);
+            //auto verticesInner = CostMap::calculateVerticesForXZ(cx, cy, CostMap::hexSize, 0.75f);
+            auto verticesInner = Ground::calculateVertices3D(cx, cy, CostMap::hexSize, 0.75f);
+            //auto verticesOuter = CostMap::calculateVerticesForXZ(cx, cy, CostMap::hexSize, 0.95f);
+            auto verticesOuter = Ground::calculateVertices3D(cx, cy, CostMap::hexSize, 0.95f);
+            
             drawHexagonRing(obj, verticesInner, verticesOuter, ColourValue(1.0f, 1.0f, 0.8f, 0.0f), ColourValue(1.0f, 1.0f, 0.8f, 0.6f));
         }
 
@@ -67,8 +70,8 @@ public:
     }
 
     void drawHexagonRing(Ogre::ManualObject *obj,
-                         const std::vector<Ogre::Vector2> &verticesInner,
-                         const std::vector<Ogre::Vector2> &verticesOuter,
+                         const std::vector<Ogre::Vector3> &verticesInner,
+                         const std::vector<Ogre::Vector3> &verticesOuter,
                          const Ogre::ColourValue &colorInner,
                          Ogre::ColourValue &colorOuter)
     {
@@ -79,11 +82,11 @@ public:
         for (int i = 0; i < 6; i++)
         {
 
-            obj->position(verticesInner[i].x, 0, verticesInner[i].y);
+            obj->position(verticesInner[i]);
             obj->normal(nomX, nomY, nomZ);
             obj->colour(colorInner);
 
-            obj->position(verticesOuter[i].x, 0, verticesOuter[i].y);
+            obj->position(verticesOuter[i]);
             obj->normal(nomX, nomY, nomZ);
             obj->colour(colorOuter);
         }
