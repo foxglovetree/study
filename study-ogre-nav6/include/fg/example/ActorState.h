@@ -1,15 +1,17 @@
 #pragma once
 
 #include <Ogre.h>
+#include <set.h>
 #include "fg/PathFollow2.h"
 #include "fg/util/CellUtil.h"
 #include "fg/util/CostMap.h"
 #include "fg/State.h"
 #include "PathState.h"
 #include "fg/Pickable.h"
+#include "fg/Mission.h"
 
 using namespace Ogre;
-class ActorState : public State, public Pickable, public Ogre::FrameListener
+class ActorState : public State, public Pickable, public Ogre::FrameListener,public Mission::Listener
 {
 protected:
     bool active = false;
@@ -20,7 +22,9 @@ protected:
     PathState *pathState;
 
     SceneNode *node;
-    AnimationState *aniState;
+    Mission *mission;
+    std::vector<std::string> aniNames = {"RunBase", "RunTop"};
+    std::vector<Ogre::FrameListener*> frameListeners;
 
 public:
     ActorState(State *parent, CostMap *costMap, Core *core) : State(parent)
@@ -113,55 +117,26 @@ public:
             std::vector<Vector2> pathByKey = costMap->findPath(aCellKey, cKey2);
             std::vector<Vector2> pathByPosition(pathByKey.size());
             CellUtil::translatePathToCellCenter(pathByKey, pathByPosition);
-            PathFollow2 *pathFollow = new PathFollow2(aPos2, pathByPosition);
-            this->setPath(pathFollow);
+            PathFollow2 *path = new PathFollow2(aPos2, pathByPosition);
+            this->setPath(path);
             pathState->setPath(pathByKey, aCellKey, cKey2);
-            enableAnimation("RunBase");
+            AnimationStateSet *anisSet = entity->getAllAnimationStates();
+            PathFollow2Mission * mission = new PathFollow2Mission(this->node, path, anisSet, aniNames);
+            mission->add(this);
+            this->frameListeners.push_back(mission);
+
         }
         return true;
     }
 
-    bool enableAnimation(std::string name)
-    {
-        aniState = entity->getAnimationState(name);
-        if (aniState)
-        {
-
-            aniState->setEnabled(true);
-            aniState->setLoop(true);   // 循环播放
-            aniState->setWeight(1.0f); // 混合权重（用于多动画混合）
-            return true;
+    bool frameStarted(const FrameEvent& evt) override {
+        for(FrameListener* l:this->frameListeners){
+            l->frameStarted(evt);
         }
-        return false;
     }
 
-    bool frameStarted(const Ogre::FrameEvent &evt) override
-    {
-        if (this->isActive())
-        {
-            PathFollow2 *pathFollow = this->getPath();
-            if (pathFollow != nullptr)
-            {
-                Vector2 pos;
-                if (pathFollow->move(evt.timeSinceLastFrame, pos))
-                {
-                    Vector3 pos0 = node->getPosition();
-                    node->translate(pos.x - pos0.x, 0, pos.y - pos0.z); // new position
-                    // animation
-                    if (aniState)
-                    {
-                        aniState->addTime(evt.timeSinceLastFrame);
-                    }
-                }
-                else
-                {
-                    setPath(nullptr);
-                }
-            }
-        }
-        else
-        {
-        }
-        return true;
+    void missionDone(Mission *mission) override{
+        this->frameListeners.
     }
+
 };

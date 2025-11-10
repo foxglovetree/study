@@ -25,7 +25,8 @@ public:
         node->setScale(SCALE, SCALE, SCALE);
         node->attachObject(entity);
         node->translate(0, SCALE * CHAR_HEIGHT , 0);
-
         // todo collect auto
+        
     }
+
 };
