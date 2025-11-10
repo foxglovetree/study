@@ -10,7 +10,7 @@ class PathFollow2
 {
     std::vector<Ogre::Vector2> path;
     float speed = 30.0f;
-    int next = 0;
+    int next = 1;//ignore the first one.
     Vector2 position;
 
 public:

@@ -224,37 +224,5 @@ public:
     int getHeight() const { return height; }
 
 private:
-    // Get hexagon vertices
-    // anti-clockwise
-    static std::vector<Ogre::Vector2> calculateVerticesForXZ_DEL(float rad, float scale = 1.0f)
-    {
-        return calculateVerticesForXZ_DEL(0, 0, rad, scale);
-    }
-
-    static std::vector<Ogre::Vector2> calculateVerticesForXZ_DEL(int x, int z, float rad, float scale = 1.0f)
-    {
-        std::vector<Ogre::Vector2> vertices(6);
-
-        Ogre::Vector3 center = calculateCenterForXZ_DEL(x, z, rad);
-
-        float RAD = scale * 2 * rad / std::sqrt(3.0f);
-
-        for (int i = 0; i < 6; i++)
-        {
-            float angle_rad = (60.0f * i + 30.0f) * Ogre::Math::PI / 180.0f;
-            float dx = RAD * std::cos(angle_rad);
-            float dz = RAD * std::sin(angle_rad);
-
-            vertices[6 - i - 1] = Ogre::Vector2(center.x + dx, center.z + dz);
-        }
-
-        return vertices;
-    }
-
-    static Ogre::Vector3 calculateCenterForXZ_DEL(int x, int z, float rad = CostMap::hexSize)
-    {
-        float centerX = x * 2 * rad + (z % 2 == 0 ? 0 : rad);
-        float centerZ = z * rad * std::sqrt(3.0f);
-        return Ogre::Vector3(centerX, 0, centerZ);
-    }
+   
 };

@@ -66,7 +66,7 @@ public:
         const Vector3 &pos = node->getPosition();
         cout << "actor.pos:" << pos << "" << endl;
         CellKey cKey;
-        bool hitCell = CellUtil::findCellByPoint(costMap, Ground::to2D(pos), cKey);
+        bool hitCell = CellUtil::findCellByPoint(costMap, Ground::Transfer::to2D(pos), cKey);
         ActorState *actor = this;
         if (hitCell)
         {
@@ -97,9 +97,10 @@ public:
         {
             return false;
         }
-        //check if this state's position on the target cell
+        // check if this state's position on the target cell
         Vector3 aPos3 = this->node->getPosition();
-        Vector2 aPos2 = Ground::to2D(aPos3);
+        float height = 0.0f;
+        Vector2 aPos2 = Ground::Transfer::to2D(aPos3, height);
         CellKey aCellKey;
         bool hitCell = CellUtil::findCellByPoint(costMap, aPos2, aCellKey);
         if (hitCell)
@@ -113,7 +114,7 @@ public:
             AnimationStateSet *anisSet = entity->getAllAnimationStates();
 
             // new child state.
-            PathFollow2MissionState *missionState = new PathFollow2MissionState(this, path, anisSet, aniNames);
+            PathFollow2MissionState *missionState = new PathFollow2MissionState(this, path, anisSet, aniNames, height);
             this->removeAllChildren();
             this->addChild(missionState);
         }

@@ -14,12 +14,14 @@ class PathFollow2MissionState : public MissionState, public FrameListener
     PathFollow2 *path;
 
     AnimationStateSet *aniSet;
+    float heightOffset = 0.0f;
 
 public:
-    PathFollow2MissionState(State *parent, PathFollow2 *path, AnimationStateSet *aniSet, std::vector<std::string> &aniNames) : MissionState(parent)
+    PathFollow2MissionState(State *parent, PathFollow2 *path, AnimationStateSet *aniSet, std::vector<std::string> &aniNames, float heightOffset = 0.0f) : MissionState(parent)
     {
         this->path = path;
         this->aniSet = aniSet;
+        this->heightOffset = heightOffset;
         for (std::string name : aniNames)
         {
             AnimationState *as = this->aniSet->getAnimationState(name);
@@ -51,7 +53,7 @@ public:
 
                 //
                 Vector3 prevPos = pNode->getPosition();
-                Vector3 currentPos = Ground::to3D(currentPos2D);
+                Vector3 currentPos = Ground::Transfer::to3D(currentPos2D, heightOffset); //
 
                 pNode->translate(currentPos - prevPos); // new position
                 // animation
@@ -61,16 +63,15 @@ public:
                     AnimationState *as = it.getNext();
                     as->addTime(evt.timeSinceLastFrame);
                 }
-                
+
                 Quaternion orientation = Ground::getRotationTo(direction2D);
                 pNode->setOrientation(orientation);
-                
-                //pNode->lookAt();
 
-                //pNode->setOrientation(Quaternion(Degree(90), Vector3::UNIT_Y));
-                //  update direction
+                // pNode->lookAt();
+
+                // pNode->setOrientation(Quaternion(Degree(90), Vector3::UNIT_Y));
+                //   update direction
                 //
-
             }
             else
             {

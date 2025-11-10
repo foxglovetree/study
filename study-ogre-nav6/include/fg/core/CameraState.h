@@ -77,7 +77,7 @@ public:
         }
         Vector3 viewCenterOnGround = ray.getPoint(hitGrd.second);
 
-        return this->ground->isPointInside(Ground::to2D(viewCenterOnGround));
+        return this->ground->isPointInside(Ground::Transfer::to2D(viewCenterOnGround));
     }
 
     bool frameStarted(const Ogre::FrameEvent &evt) override

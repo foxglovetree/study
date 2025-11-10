@@ -13,9 +13,9 @@ public:
         for (int i = 0; i < pathByKey.size(); i++)
         {
             auto p = pathByKey[i];
-            //auto center = CostMap::calculateCenterForXZ(static_cast<int>(p.x), static_cast<int>(p.y), CostMap::hexSize);
+            // auto center = CostMap::calculateCenterForXZ(static_cast<int>(p.x), static_cast<int>(p.y), CostMap::hexSize);
             auto center = Ground::calculateCenter(static_cast<int>(p.x), static_cast<int>(p.y), CostMap::hexSize);
-            
+
             pathByPosition[i] = Vector2(center.x, center.y);
         }
     }
@@ -25,7 +25,6 @@ public:
         return findCellByPoint(costMap, point.x, point.z, cKey.first, cKey.second);
     }
     */
-
 
     static bool findCellByPoint(CostMap *costMap, Vector2 point, CellKey &cKey)
     {
@@ -53,7 +52,7 @@ public:
     }
     static bool isPointInCell(float px, float py, int cx, int cy)
     {
-        //auto corners = CostMap::calculateVerticesForXZ(cx, cy, CostMap::hexSize);
+        // auto corners = CostMap::calculateVerticesForXZ(cx, cy, CostMap::hexSize);
         auto corners = Ground::calculateVertices(cx, cy, CostMap::hexSize);
 
         // 叉积判断是否在所有边的左侧
@@ -66,8 +65,11 @@ public:
             // 向量 edge = p2 - p1
             // 向量 point = (mx, my) - p1
             float cross = (px - p1.x) * (p2.y - p1.y) - (py - p1.y) * (p2.x - p1.x);
-            if (cross < 0)
+
+            if (cross > 0)
+            {
                 return false;
+            }
         }
         return true;
     }
