@@ -20,6 +20,7 @@ public:
         entity = sMgr->createEntity("Sinbad.mesh");
         entity->setQueryFlags(0x00000001);
         
+        
         sceNode = sMgr->getRootSceneNode()->createChildSceneNode(Vector3::UNIT_Y * ACTOR_HEIGHT);
         sceNode->setScale(ACTOR_SCALE, ACTOR_SCALE, ACTOR_SCALE);
         sceNode->attachObject(entity);

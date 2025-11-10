@@ -61,15 +61,16 @@ public:
                     AnimationState *as = it.getNext();
                     as->addTime(evt.timeSinceLastFrame);
                 }
+                
+                Quaternion orientation = Ground::getRotationTo(direction2D);
+                pNode->setOrientation(orientation);
+                
+                //pNode->lookAt();
 
-                //float angle = atan2(-direction.y, direction.x) + Ogre::Math::HALF_PI; // 因为 next.y 对应 Z
-
-                //Quaternion orientation = Quaternion(Radian(angle), Vector3::UNIT_Y);
-
-                //pNode->setOrientation(orientation);
-                // pNode->setOrientation(Quaternion(Degree(90), Vector3::UNIT_Y));
+                //pNode->setOrientation(Quaternion(Degree(90), Vector3::UNIT_Y));
                 //  update direction
                 //
+
             }
             else
             {

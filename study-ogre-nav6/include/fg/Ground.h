@@ -9,6 +9,15 @@ using namespace Ogre;
 class Ground
 {
 public:
+
+    static inline const Vector3 DEFAULT_FORWARD = Ogre::Vector3::UNIT_Z;
+
+    static Quaternion getRotationTo(Vector2 &direction)
+    {
+        Vector3 d3 = to3D(direction);
+        return DEFAULT_FORWARD.getRotationTo(d3);
+    }
+
     static std::vector<Ogre::Vector3> to3D(std::vector<Ogre::Vector2> &vec2Vec)
     {
         std::vector<Ogre::Vector3> vertices(vec2Vec.size());
@@ -78,5 +87,4 @@ public:
 public:
     virtual bool isPointInside(float x, float z) = 0;
     virtual bool isPointInside(Vector2 &p) = 0;
-
 };
