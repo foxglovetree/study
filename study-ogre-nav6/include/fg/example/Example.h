@@ -45,7 +45,9 @@ public:
 
             CostMap *costMap = core->getUserObject<CostMap>("costMap", true);
             Ground * ground = new ExampleGround(costMap);
-            new WorldStateControl(costMap,ground, core);
+            State* world = new WorldStateControl(costMap,ground, core);
+            SceneNode* node = core->getSceneManager()->getRootSceneNode();
+            world->setSceneNode(node);
         }
     };
 };

@@ -19,14 +19,15 @@ public:
         SceneManager *sMgr = core->getSceneManager();
         entity = sMgr->createEntity("Sinbad.mesh");
         entity->setQueryFlags(0x00000001);
-        entity->setUserAny(Any((State *)this));
-
-        node = sMgr->getRootSceneNode()->createChildSceneNode(Vector3::UNIT_Y * CHAR_HEIGHT * SCALE);
-        node->setScale(SCALE, SCALE, SCALE);
-        node->attachObject(entity);
-        node->translate(0, SCALE * CHAR_HEIGHT , 0);
-        // todo collect auto
         
+        sceNode = sMgr->getRootSceneNode()->createChildSceneNode(Vector3::UNIT_Y * CHAR_HEIGHT * SCALE);
+        sceNode->setScale(SCALE, SCALE, SCALE);
+        sceNode->attachObject(entity);
+        sceNode->translate(0, SCALE * CHAR_HEIGHT , 0);
+        // todo collect auto
+        this->setSceneNode(sceNode);
+        
+                
     }
 
 };

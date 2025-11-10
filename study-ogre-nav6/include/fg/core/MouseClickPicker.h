@@ -75,32 +75,29 @@ public:
         // 执行查询
         Ogre::RaySceneQueryResult &result = rayQuery->execute();
 
-        Pickable *actor = nullptr;
+        Pickable *picked = nullptr;
         MovableObject *actorMo = nullptr;
         // 遍历结果
         for (auto &it : result)
         {
-            const Any &any = it.movable->getUserAny();
-            if (any.isEmpty())
-            {
-                continue;
-            }
+            Node * node = it.movable->getParentNode();
+            State *s = State::get(node);
+            Pickable * p = s->getPickable();
 
-            State *state = Ogre::any_cast<State *>(any);
-            if (Pickable *actorPtr = dynamic_cast<Pickable *>(state))
+            if (p)
             {
-                actor = actorPtr;
+                picked = p;
                 actorMo = it.movable;
             }
             break;
         }
         sMgr->destroyQuery(rayQuery);
-        if (actor == nullptr)
+        if (!picked)
         {
             return false;
         }
         //
-        return actor->afterPick(actorMo);
+        return picked->afterPick(actorMo);
         // high light the cell in which the actor stand.
     }
 

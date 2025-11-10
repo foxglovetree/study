@@ -29,8 +29,6 @@
 // === Custom hash function ===
 //
 
-
-
 // === Main function ===
 int main()
 {
@@ -47,15 +45,23 @@ int main()
         auto app = std::make_unique<SimpleApp>();
         app->add(new Example::CostMapMod());
         app->add(new Example::WorldStateMod());
-        
+
         app->setup();
         app->startRendering();
         app->close();
+    }
+    catch(Ogre::Exception& e){
+        std::cerr << "Error: " << e.what() << "\n";
+        return 1;
     }
     catch (const std::exception &e)
     {
         std::cerr << "Error: " << e.what() << "\n";
         return 1;
+    }
+    catch (...)
+    {
+        std::cerr << "Unknown Error." << std::endl;
     }
 
     return 0;

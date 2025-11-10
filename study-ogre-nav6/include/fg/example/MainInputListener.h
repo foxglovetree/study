@@ -39,6 +39,7 @@ class MainInputListener : public OgreBites::InputListener
 {
 private:
     IWorld *wsc;
+
     Core *core;
 
 public:
@@ -49,10 +50,9 @@ public:
         this->wsc = wsc;
     }
 
-
     bool mousePressed(const MouseButtonEvent &evt) override
     {
-        
+
         if (evt.button == ButtonType::BUTTON_RIGHT)
         {
 
@@ -85,8 +85,9 @@ public:
             bool hitCell = CellUtil::findCellByPoint(costMap, Vector2(pos.x, pos.z), cKey);
             if (hitCell)
             {
-                //
-                wsc->setTargetByCell(cKey);
+
+                State::forAllState(core->getRootState(), [cKey](State *s)
+                                   { s->setTargetByCell(cKey); });
                 //
             }
             // cout << "worldPoint(" << pickX << ",0," << pickZ << "),cellIdx:[" << cx << "," << cy << "]" << endl;

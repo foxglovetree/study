@@ -67,11 +67,8 @@ public:
         return costMap;
     }
 
-    void setTargetByCell(CellKey cKey) override
-    {
-        SceneManager *sMgr = core->getSceneManager();
-        SceneNode *rNode = sMgr->getRootSceneNode();
-        State::forEachState(rNode, [cKey](MovableObject *mo, State *s)
-                            { s->setTargetByCell(mo, cKey); });
+    bool setTargetByCell(CellKey cKey) override
+    { 
+        return true;  
     }
 };

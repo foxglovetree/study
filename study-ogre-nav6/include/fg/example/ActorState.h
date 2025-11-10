@@ -1,18 +1,18 @@
 #pragma once
 
 #include <Ogre.h>
-#include <set.h>
 #include "fg/PathFollow2.h"
 #include "fg/util/CellUtil.h"
 #include "fg/util/CostMap.h"
 #include "fg/State.h"
 #include "PathState.h"
 #include "fg/Pickable.h"
-#include "fg/Mission.h"
-
+#include "fg/core/PathFollow2MissionState.h"
+#include "fg/util/CollectionUtil.h"
 using namespace Ogre;
-class ActorState : public State, public Pickable, public Ogre::FrameListener,public Mission::Listener
+class ActorState : public State, public Pickable, public Ogre::FrameListener
 {
+
 protected:
     bool active = false;
 
@@ -21,16 +21,16 @@ protected:
     CostMap *costMap;
     PathState *pathState;
 
-    SceneNode *node;
-    Mission *mission;
+    MissionState *mission;
     std::vector<std::string> aniNames = {"RunBase", "RunTop"};
-    std::vector<Ogre::FrameListener*> frameListeners;
 
 public:
     ActorState(State *parent, CostMap *costMap, Core *core) : State(parent)
     {
         this->costMap = costMap;
         pathState = new PathState(this, costMap, core);
+        this->setPickable(this);
+        this->setFrameListener(this);
     }
 
     void setEntity(Ogre::Entity *entity)
@@ -41,17 +41,6 @@ public:
     {
         return this->entity;
     }
-
-    SceneNode *getNode()
-    {
-        return this->node;
-    }
-
-    void setNode(SceneNode *node)
-    {
-        this->node = node;
-    }
-
     void setActive(bool active)
     {
         this->active = active;
@@ -102,13 +91,14 @@ public:
         return true;
     }
 
-    bool setTargetByCell(MovableObject *mo, CellKey cKey2) override
+    bool setTargetByCell(CellKey cKey2) override
     {
         if (!this->isActive())
         {
             return false;
         }
-        Vector3 aPos3 = mo->getParentNode()->getPosition();
+        //check if this state's position on the target cell
+        Vector3 aPos3 = this->node->getPosition();
         Vector2 aPos2(aPos3.x, aPos3.z);
         CellKey aCellKey;
         bool hitCell = CellUtil::findCellByPoint(costMap, aPos2, aCellKey);
@@ -121,22 +111,27 @@ public:
             this->setPath(path);
             pathState->setPath(pathByKey, aCellKey, cKey2);
             AnimationStateSet *anisSet = entity->getAllAnimationStates();
-            PathFollow2Mission * mission = new PathFollow2Mission(this->node, path, anisSet, aniNames);
-            mission->add(this);
-            this->frameListeners.push_back(mission);
 
+            // new child state.
+            PathFollow2MissionState *missionState = new PathFollow2MissionState(this, path, anisSet, aniNames);
+            this->removeAllChildren();
+            this->addChild(missionState);
         }
+
         return true;
     }
 
-    bool frameStarted(const FrameEvent& evt) override {
-        for(FrameListener* l:this->frameListeners){
-            l->frameStarted(evt);
-        }
+    bool frameStarted(const FrameEvent &evt) override
+    {
+        std::function<void(State *)> func = [&evt](State *cState)
+        {
+            FrameListener *fl = cState->getFrameListener();
+            if (fl)
+            {
+                fl->frameStarted(evt);
+            }
+        };
+        this->forEachChild(func);
+        return true;
     }
-
-    void missionDone(Mission *mission) override{
-        this->frameListeners.
-    }
-
 };

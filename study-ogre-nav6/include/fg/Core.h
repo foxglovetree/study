@@ -21,6 +21,7 @@ public:
 
     virtual void setUserObject(const std::string key, std::any value) = 0;
     virtual bool getUserObject(const std::string key, std::any &value) = 0;
+    virtual State* getRootState() = 0;
 
     template <typename T>
     void setUserObject(const std::string key, T *obj)

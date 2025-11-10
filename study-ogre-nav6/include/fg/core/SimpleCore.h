@@ -125,4 +125,7 @@ public:
         }
         return false;
     }
+    State* getRootState() override{
+        return State::get(this->sceMgr->getRootSceneNode());
+    }
 };

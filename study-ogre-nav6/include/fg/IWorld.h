@@ -17,5 +17,5 @@ class IWorld
 
 public:
     virtual CostMap * getCostMap() = 0;
-    virtual void setTargetByCell(CellKey cKey) = 0;
+    
 };
