@@ -10,7 +10,7 @@ class PathFollow2
 {
     std::vector<Ogre::Vector2> path;
     float speed = 30.0f;
-    int target = 0;
+    int next = 0;
     Vector2 position;
 
 public:
@@ -20,35 +20,33 @@ public:
         this->path = path;
     }
 
-    bool move(float timeEscape, Vector2 &position)
+    bool move(float timeEscape, Vector2 &currentPos, Vector2 &direction)
     {
-        bool rt = true;
-        while (true)
+        bool rt = false;
+        while (next < path.size())
         {
-            if (target >= path.size())
-            {
-                rt = false;
-                break;
-            }
+            Vector2 nextPos = path[next];//next position
+            direction = nextPos - position;//direction
 
-            Vector2 targetPoint = path[target];
-            Vector2 direction = targetPoint - this->position;
             float distance = direction.length();
-            if (distance < 0.1f)
+            if (distance < 0.01f)
             {
-                target++;
+                next++;
                 continue;
             }
+            //found the right position
             direction.normalise();
             float move = speed * timeEscape;
             if (move > distance)
             {
                 move = distance;
             }
-            this->position += direction * move;
+
+            position += direction * move;
+            currentPos = this->position;
+            rt = true;
             break;
         }
-        position = this->position;
         return rt;
     }
 };

@@ -38,18 +38,21 @@ public:
 
     bool frameStarted(const Ogre::FrameEvent &evt) override
     {
-        SceneNode *pNode = this->findSceneNode();//the parent node to operate 
+        SceneNode *pNode = this->findSceneNode(); // the parent node to operate
+
         if (pNode) // if the parent has no scene node attached,ignore the update operation.
         {
-
             PathFollow2 *pathFollow = this->getPath();
 
-            Vector2 pos;
-            if (pathFollow->move(evt.timeSinceLastFrame, pos))
+            Vector2 currentPos;
+            Vector2 direction;
+            if (pathFollow->move(evt.timeSinceLastFrame, currentPos, direction))
             {
 
-                Vector3 pos0 = pNode->getPosition();
-                pNode->translate(pos.x - pos0.x, 0, pos.y - pos0.z); // new position
+                //
+                Vector3 prevPos = pNode->getPosition();
+
+                pNode->translate(currentPos.x - prevPos.x, 0, currentPos.y - prevPos.z); // new position
                 // animation
                 AnimationStateIterator it = this->aniSet->getAnimationStateIterator();
                 while (it.hasMoreElements())
@@ -57,11 +60,23 @@ public:
                     AnimationState *as = it.getNext();
                     as->addTime(evt.timeSinceLastFrame);
                 }
+
+                float angle = atan2(-direction.y, direction.x) + Ogre::Math::HALF_PI; // 因为 next.y 对应 Z
+
+                Quaternion orientation = Quaternion(Radian(angle), Vector3::UNIT_Y);
+                pNode->setOrientation(orientation);
+                // pNode->setOrientation(Quaternion(Degree(90), Vector3::UNIT_Y));
+                //  update direction
+                //
             }
             else
             {
                 this->setDone(true);
             }
+        }
+        else
+        {
+            // todo add warning here if no scene node found.
         }
         return true;
     }
