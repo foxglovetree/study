@@ -22,7 +22,7 @@ private:
 
 public:
     CellMarkStateControl(CostMap *costMap, Core* core,
-                         MarkType type) : costMap(costMap), markType(type), State(nullptr)
+                         MarkType type) : costMap(costMap), markType(type)
     {
         obj = core->getSceneManager()->createManualObject();
         node = core->getSceneManager()->getRootSceneNode()->createChildSceneNode();

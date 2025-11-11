@@ -59,6 +59,11 @@ int main()
         std::cerr << "Error: " << e.what() << "\n";
         return 1;
     }
+    catch (const char* &e)
+    {
+        std::cerr << "Error: " << e << "\n";
+        return 1;
+    }
     catch (...)
     {
         std::cerr << "Unknown Error." << std::endl;

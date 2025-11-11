@@ -17,7 +17,7 @@ class PathFollow2MissionState : public MissionState, public FrameListener
     float heightOffset = 0.0f;
 
 public:
-    PathFollow2MissionState(State *parent, PathFollow2 *path, AnimationStateSet *aniSet, std::vector<std::string> &aniNames, float heightOffset = 0.0f) : MissionState(parent)
+    PathFollow2MissionState(PathFollow2 *path, AnimationStateSet *aniSet, std::vector<std::string> &aniNames, float heightOffset = 0.0f)
     {
         this->path = path;
         this->aniSet = aniSet;

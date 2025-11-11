@@ -23,7 +23,7 @@ class PathState : public State
 
     Core* core;
 public:
-    PathState(State* p, CostMap* costMap, Core*core) : State(p)
+    PathState(CostMap* costMap, Core*core)
     {
         this->costMap = costMap;
 

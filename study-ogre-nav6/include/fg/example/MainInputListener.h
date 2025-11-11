@@ -83,14 +83,21 @@ public:
             CellKey cKey;
             CostMap *costMap = this->wsc->getCostMap();
 
-            //bool hitCell = CellUtil::findCellByPoint(costMap, Vector2(pos.x, pos.z), cKey);
+            // bool hitCell = CellUtil::findCellByPoint(costMap, Vector2(pos.x, pos.z), cKey);
             bool hitCell = CellUtil::findCellByPoint(costMap, Ground::Transfer::to2D(pos), cKey);
-            
+
             if (hitCell)
             {
 
-                State::forAllState(core->getRootState(), [cKey](State *s)
-                                   { s->setTargetByCell(cKey); });
+                core->getRootState()->forEachChild(
+                    [&cKey](State *s)
+                    {
+                        Movable *mvb = s->getMovable();
+                        if (mvb)
+                        {
+                            mvb->setTargetCell(cKey);
+                        }
+                    });
                 //
             }
             // cout << "worldPoint(" << pickX << ",0," << pickZ << "),cellIdx:[" << cx << "," << cy << "]" << endl;

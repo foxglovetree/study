@@ -9,8 +9,9 @@
 #include "fg/Pickable.h"
 #include "fg/core/PathFollow2MissionState.h"
 #include "fg/util/CollectionUtil.h"
+#include "fg/Movable.h"
 using namespace Ogre;
-class ActorState : public State, public Pickable, public Ogre::FrameListener
+class ActorState : public State, public Pickable, public Ogre::FrameListener, public Movable
 {
 
 protected:
@@ -21,16 +22,18 @@ protected:
     CostMap *costMap;
     PathState *pathState;
 
-    MissionState *mission;
+    PathFollow2MissionState *mission = nullptr;
     std::vector<std::string> aniNames = {"RunBase", "RunTop"};
 
 public:
-    ActorState(State *parent, CostMap *costMap, Core *core) : State(parent)
+    ActorState(CostMap *costMap, Core *core) : State()
     {
         this->costMap = costMap;
-        pathState = new PathState(this, costMap, core);
+        pathState = new PathState(costMap, core);
+
         this->setPickable(this);
         this->setFrameListener(this);
+        this->setMovable(this);
     }
 
     void setEntity(Ogre::Entity *entity)
@@ -91,14 +94,14 @@ public:
         return true;
     }
 
-    bool setTargetByCell(CellKey cKey2) override
+    bool setTargetCell(CellKey &cKey2) override
     {
         if (!this->isActive())
         {
             return false;
         }
         // check if this state's position on the target cell
-        Vector3 aPos3 = this->node->getPosition();
+        Vector3 aPos3 = this->sceNode->getPosition();
         float height = 0.0f;
         Vector2 aPos2 = Ground::Transfer::to2D(aPos3, height);
         CellKey aCellKey;
@@ -114,9 +117,19 @@ public:
             AnimationStateSet *anisSet = entity->getAllAnimationStates();
 
             // new child state.
-            PathFollow2MissionState *missionState = new PathFollow2MissionState(this, path, anisSet, aniNames, height);
-            this->removeAllChildren();
+            PathFollow2MissionState *missionState = new PathFollow2MissionState(path, anisSet, aniNames, height);
+            // delete missionState;
+
+            if (this->mission)
+            {
+                //int size = this->children->size();
+                this->removeChild(this->mission);
+                // std::cout << "children:size" << size << ",after remove child size:" << this->children->size() << std::endl;
+
+                delete this->mission;
+            }
             this->addChild(missionState);
+            this->mission = missionState;
         }
 
         return true;

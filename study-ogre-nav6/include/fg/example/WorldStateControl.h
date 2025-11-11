@@ -52,9 +52,9 @@ public:
         cameraState->setGround(this->ground); //
         root->addFrameListener(cameraState);
 
-
         markStateControls[MarkType::ACTIVE] = new CellMarkStateControl(costMap, core, MarkType::ACTIVE);
-        ActorStateControl *actor = new ActorStateControl(this, costMap, core);
+        ActorStateControl *actor = new ActorStateControl( costMap, core);
+        this->addChild(actor);
         root->addFrameListener(actor);
         MainInputListener *keyHandler = new MainInputListener(this, core);
         core->getAppContext()->addInputListener(keyHandler);
@@ -65,10 +65,5 @@ public:
     CostMap *getCostMap()
     {
         return costMap;
-    }
-
-    bool setTargetByCell(CellKey cKey) override
-    { 
-        return true;  
     }
 };

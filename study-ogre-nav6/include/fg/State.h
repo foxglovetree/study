@@ -9,6 +9,7 @@
 #include "OgreFrameListener.h"
 #include "util/CellUtil.h"
 #include "util/CostMap.h"
+#include "Movable.h"
 using namespace Ogre;
 
 class State
@@ -25,33 +26,9 @@ public:
         State *state = Ogre::any_cast<State *>(any);
         return state;
     }
-    static void set(Node *node, State *state)
+    static void set(SceneNode *node, State *state)
     {
         node->setUserAny(state);
-    }
-
-    static void forAllState(State *state, std::function<void(State *)> func)
-    {
-        func(state);
-        forEachChildState(state, func, true);
-    }
-
-    static void forEachChildState(State *s, std::function<void(State *)> func, bool recursive = true)
-    {
-        Node *node = s->node;
-        auto cMap = node->getChildren();
-
-        for (auto it = cMap.begin(); it != cMap.end(); ++it)
-        {
-            Node *cNode = *it;
-            State *cState = State::get(cNode);
-            if (!cState)
-            {
-                // TODO throw exception.
-                continue;
-            }
-            forAllState(cState, func);
-        }
     }
 
     static State *getState(MovableObject *mo)
@@ -67,21 +44,22 @@ public:
     }
 
 protected:
-    State *parent;
+    State *parent = nullptr;
     FrameListener *frameListener = nullptr;
     Pickable *pickable = nullptr;
-    Node *node = nullptr;
+    Movable *movable = nullptr;
     SceneNode *sceNode = nullptr;
+    std::vector<State *> *children;
 
 public:
-    State(State *parent)
-    {
-        this->parent = parent;
-    }
-
     State()
     {
-        this->parent = nullptr;
+        this->children = new std::vector<State *>();
+        std::cout << "new State()" << this << "" << std::endl;
+    }
+    virtual ~State()
+    {
+        std::cout << "~State()" << this << "" << std::endl;
     }
 
     SceneNode *getSceneNode()
@@ -104,43 +82,23 @@ public:
     }
     void setSceneNode(SceneNode *sNode)
     {
-        this->setNode(sNode);
+        State::set(sNode, this);
         this->sceNode = sNode;
-    }
-
-    Node *getNode()
-    {
-        return this->node;
-    }
-
-    void setNode(Node *node2)
-    {
-
-        if (this->node != nullptr)
-        {
-            // move this node from the old node to the new one.
-            // erase the state of the new node if any.
-            this->node->setUserAny(Any(nullptr));
-        }
-        State::set(node2, this);
-        this->node = node2;
     }
 
     void addChild(State *s)
     {
-        Node *cNode = this->node->createChild();
-        s->setNode(cNode);
+        if (s->parent)
+        {
+            throw "Already has a parent state.";
+        }
+        this->children->push_back(s);
+        s->parent = this;
     }
 
-    void removeAllChildren()
+    void removeChild(State *cs)
     {
-        std::vector<Node *> cMap = this->node->getChildren();
-        for (auto it : cMap)
-        {
-            State *cS = State::get(it);
-            delete cS;
-        }
-        this->node->removeAllChildren();
+        this->children->erase(std::remove(this->children->begin(), this->children->end(), cs), this->children->end());
     }
 
     Pickable *getPickable()
@@ -163,20 +121,22 @@ public:
         this->frameListener = listener;
     }
 
-    virtual bool setTargetByCell(CellKey cKey2)
+    Movable *getMovable()
     {
-        return false;
+        return this->movable;
     }
 
-    void forEachChild(std::function<void(State *)> &func, bool recusive = true)
+    void setMovable(Movable *mvb)
     {
+        this->movable = mvb;
+    }
 
-        auto cMap = node->getChildren();
-
-        for (auto it = cMap.begin(); it != cMap.end(); ++it)
+    void forEachChild(std::function<void(State *)> func, bool recusive = true)
+    {
+        std::vector<State *> *tmp = this->children;
+        for (auto it = tmp->begin(); it != tmp->end(); ++it)
         {
-            Node *cNode = *it;
-            State *s = State::get(cNode);
+            State *s = *it;
             func(s);
             if (recusive)
             {

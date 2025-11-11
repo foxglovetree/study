@@ -13,7 +13,7 @@ class ActorStateControl : public ActorState
     CostMap *costMap;
 
 public:
-    ActorStateControl(State *parent, CostMap *costMap, Core *core) : ActorState(parent, costMap, core)
+    ActorStateControl(CostMap *costMap, Core *core) : ActorState(costMap, core)
     {
 
         SceneManager *sMgr = core->getSceneManager();

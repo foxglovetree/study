@@ -20,7 +20,7 @@ private:
     CostMap *costMap;
 
 public:
-    CellStateControl(CostMap *costMap, Core *core) : State(nullptr)
+    CellStateControl(CostMap *costMap, Core *core) 
     {
         Ogre::SceneManager *sceneMgr = core->getSceneManager();
         this->costMap = costMap;

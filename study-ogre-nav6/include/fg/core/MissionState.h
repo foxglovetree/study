@@ -20,7 +20,7 @@ protected:
     std::vector<MissionState::Listener *> listeners;
 
 public:
-    MissionState(State *parent) : State(parent)
+    MissionState() 
     {
     }
 
