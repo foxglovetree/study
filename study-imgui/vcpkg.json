@@ -1,0 +1,17 @@
+{
+  "name": "my-ogre-app-1",
+  "version-string": "1.0.0",
+  "dependencies": [
+    {
+      "name": "opengl"
+    },
+    {
+      "name": "imgui",
+      "platform": "windows",
+      "features": [
+        "sdl3-binding",
+        "opengl3-binding"
+      ]
+    }
+  ]
+}
